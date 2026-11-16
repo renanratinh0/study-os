@@ -1,0 +1,6 @@
+{
+  "token": "SEU_NOTION_INTERNAL_INTEGRATION_TOKEN",
+  "database_id": "SEU_DATABASE_ID",
+  "cache_file": "notion_cache.json",
+  "firebase_secret": "SEU_FIREBASE_DATABASE_SECRET_OU_SENHA"
+}

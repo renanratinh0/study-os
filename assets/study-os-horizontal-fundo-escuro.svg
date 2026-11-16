@@ -1,0 +1,122 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1301.07 434" role="img" aria-labelledby="t">
+  <title id="t">Study OS</title>
+  <defs>
+    <path id="squircle" d="M380,78H645C830.6,78 935,182.4 935,368V645C935,830.6 830.6,935 645,935H380C194.4,935 90,830.6 90,645V368C90,182.4 194.4,78 380,78Z"/>
+    <clipPath id="cPlate"><use href="#squircle"/></clipPath>
+
+    <!-- Moldura e placa -->
+    <linearGradient id="gFrame" gradientUnits="userSpaceOnUse" x1="90" y1="0" x2="935" y2="0">
+      <stop offset="0" stop-color="#4a6cff"/>
+      <stop offset="0.45" stop-color="#8f4dff"/>
+      <stop offset="0.8" stop-color="#e03cd2"/>
+      <stop offset="1" stop-color="#ff3a9c"/>
+    </linearGradient>
+    <linearGradient id="gPlate" gradientUnits="userSpaceOnUse" x1="90" y1="78" x2="935" y2="935">
+      <stop offset="0" stop-color="#0d0b1c"/>
+      <stop offset="1" stop-color="#120a1f"/>
+    </linearGradient>
+
+    <!-- Órbitas -->
+    <linearGradient id="gOrbit" gradientUnits="userSpaceOnUse" x1="180" y1="0" x2="850" y2="0">
+      <stop offset="0" stop-color="#5a50f2"/>
+      <stop offset="0.5" stop-color="#9448f5"/>
+      <stop offset="1" stop-color="#ff32b0"/>
+    </linearGradient>
+    <linearGradient id="gOrbitV" gradientUnits="userSpaceOnUse" x1="362" y1="200" x2="670" y2="800">
+      <stop offset="0" stop-color="#5a5aff"/>
+      <stop offset="0.45" stop-color="#a24fff"/>
+      <stop offset="1" stop-color="#c84dff"/>
+    </linearGradient>
+
+    <!-- Livro -->
+    <linearGradient id="gPageL" gradientUnits="userSpaceOnUse" x1="322" y1="380" x2="508" y2="610">
+      <stop offset="0" stop-color="#6e8cff"/>
+      <stop offset="0.5" stop-color="#8a5cf2" stop-opacity="0.95"/>
+      <stop offset="0.85" stop-color="#5a30b8" stop-opacity="0.75"/>
+      <stop offset="1" stop-color="#2c1760" stop-opacity="0.5"/>
+    </linearGradient>
+    <linearGradient id="gPageR" gradientUnits="userSpaceOnUse" x1="516" y1="560" x2="702" y2="380">
+      <stop offset="0" stop-color="#3a1f7e" stop-opacity="0.5"/>
+      <stop offset="0.45" stop-color="#a84dff" stop-opacity="0.95"/>
+      <stop offset="1" stop-color="#ff62e4"/>
+    </linearGradient>
+    <linearGradient id="gCover" gradientUnits="userSpaceOnUse" x1="292" y1="0" x2="732" y2="0">
+      <stop offset="0" stop-color="#5f80ff"/>
+      <stop offset="0.5" stop-color="#9b52ff"/>
+      <stop offset="1" stop-color="#ff4fd0"/>
+    </linearGradient>
+    <linearGradient id="gTerm" gradientUnits="userSpaceOnUse" x1="460" y1="0" x2="570" y2="0">
+      <stop offset="0" stop-color="#d44dff"/>
+      <stop offset="1" stop-color="#ff60e0"/>
+    </linearGradient>
+
+    <!-- Elétrons -->
+    <radialGradient id="gElecTR" cx="0.35" cy="0.3" r="0.75">
+      <stop offset="0" stop-color="#f5c6ff"/>
+      <stop offset="0.55" stop-color="#c76bff"/>
+      <stop offset="1" stop-color="#a14dff"/>
+    </radialGradient>
+    <radialGradient id="gElecBL" cx="0.35" cy="0.3" r="0.75">
+      <stop offset="0" stop-color="#bcbdff"/>
+      <stop offset="0.55" stop-color="#7b72ff"/>
+      <stop offset="1" stop-color="#5a4cff"/>
+    </radialGradient>
+
+    <!-- Brilhos -->
+    <filter id="fGlow" x="-15%" y="-15%" width="130%" height="130%" color-interpolation-filters="sRGB">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="8" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <filter id="fSmallGlow" x="-40%" y="-40%" width="180%" height="180%" color-interpolation-filters="sRGB">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="4" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <filter id="fFrameGlow" x="-10%" y="-10%" width="120%" height="120%" color-interpolation-filters="sRGB">
+      <feGaussianBlur stdDeviation="14"/>
+    </filter>
+  
+    <linearGradient id="gOS" gradientUnits="userSpaceOnUse" x1="987.18" y1="0" x2="1239.07" y2="0">
+      <stop offset="0" stop-color="#6f66ff"/>
+      <stop offset="0.55" stop-color="#b24fff"/>
+      <stop offset="1" stop-color="#ff3eb5"/>
+    </linearGradient>
+  </defs>
+
+  <g id="symbol" transform="translate(62,62) scale(0.45994) translate(-170,-148)">
+  <g id="orbits" fill="none" stroke-width="18" stroke-linecap="round" filter="url(#fGlow)" opacity="0.82">
+    <ellipse cx="512" cy="485" rx="146" ry="328" stroke="url(#gOrbitV)"/>
+    <path stroke="url(#gOrbit)" d="M831,648.8A352,145 25 0 1 193,351.2A352,145 25 0 1 831,648.8Z"/>
+    <path stroke="url(#gOrbit)" d="M831,351.2A352,145 -25 0 1 193,648.8A352,145 -25 0 1 831,351.2Z"/>
+  </g>
+
+  <!-- Livro aberto -->
+  <g id="book">
+    <path id="cover" fill="none" stroke="url(#gCover)" stroke-width="19" stroke-linecap="round" stroke-linejoin="round" filter="url(#fSmallGlow)"
+          d="M292,394V566C292,574 297,580 306,583C380,602 456,640 506,686Q512,692 518,686C568,640 644,602 718,583C727,580 732,574 732,566V394"/>
+    <path id="page-left" fill="url(#gPageL)"
+          d="M322,376C322,362 334,352 350,357C420,372 480,396 508,436L508,648C450,606 380,578 338,548C326,540 322,532 322,520Z"/>
+    <path id="page-right" fill="url(#gPageR)"
+          d="M702,376C702,362 690,352 674,357C604,372 544,396 516,436L516,648C574,606 644,578 686,548C698,540 702,532 702,520Z"/>
+  </g>
+
+  <!-- Terminal -->
+  <g id="terminal">
+    <rect x="440" y="436" width="146" height="112" rx="22" fill="#07061a" opacity="0.4"/>
+    <g fill="none" stroke="url(#gTerm)" stroke-width="13" stroke-linecap="round" stroke-linejoin="round" filter="url(#fSmallGlow)">
+      <path d="M466,460L496,490L466,520"/>
+      <path d="M520,520H562"/>
+    </g>
+  </g>
+
+  <!-- Elétrons -->
+  <g id="electrons" filter="url(#fSmallGlow)">
+    <circle cx="708" cy="291" r="30" fill="url(#gElecTR)"/>
+    <circle cx="282" cy="700" r="32" fill="url(#gElecBL)"/>
+  </g>
+</g>
+
+  <g id="wordmark">
+    <path id="study" fill="#F5F3FF" d="M490.68 283.66Q473.84 283.66 462.3 278.28Q450.75 272.9 444.68 263.44Q438.6 253.98 438.6 242H462.73Q462.73 247.03 465.51 251.81Q468.29 256.58 474.45 259.53Q480.61 262.48 490.68 262.48Q499.71 262.48 505.78 259.88Q511.86 257.28 514.81 253.02Q517.76 248.77 517.76 243.39Q517.76 236.62 512.03 232.54Q506.3 228.46 494.33 227.42L483.21 226.55Q464.99 224.99 454.14 215.18Q443.29 205.37 443.29 189.22Q443.29 177.07 449.02 168.31Q454.74 159.54 465.07 154.76Q475.4 149.99 489.29 149.99Q503.7 149.99 514.12 155.02Q524.53 160.06 530.26 169.17Q535.99 178.29 535.99 190.61H511.86Q511.86 185.4 509.34 180.98Q506.82 176.55 501.88 173.86Q496.93 171.17 489.29 171.17Q482 171.17 477.14 173.6Q472.28 176.03 469.85 180.2Q467.42 184.36 467.42 189.22Q467.42 195.13 471.76 199.55Q476.1 203.98 485.47 204.67L496.58 205.72Q510.12 206.76 520.37 211.44Q530.61 216.13 536.25 224.12Q541.89 232.1 541.89 243.39Q541.89 255.37 535.64 264.48Q529.39 273.59 517.85 278.63Q506.3 283.66 490.68 283.66ZM601.44 281.58Q588.42 281.58 580 278.19Q571.58 274.81 567.41 266.74Q563.24 258.66 563.24 244.95V203.81H548.31V186.1H563.42V159.54H585.99V186.1H614.98V203.81H585.81V246.51Q585.81 253.46 589.54 257.19Q593.28 260.92 600.22 260.92H614.98V281.58ZM665.32 283.32Q649 283.32 640.06 272.55Q631.12 261.79 631.12 240.61V185.93H655.25V242.69Q655.25 251.37 660.11 256.49Q664.97 261.62 673.31 261.62Q681.64 261.62 686.93 256.23Q692.23 250.85 692.23 241.65V185.93H716.36V280.36H697.26V258.49Q696.57 261.44 695.53 264.05Q691.88 273.59 684.59 278.45Q677.3 283.32 666.36 283.32ZM781.11 283.49Q771.22 283.49 762.88 279.84Q754.55 276.2 748.48 269.6Q742.4 263 739.1 254.24Q735.8 245.47 735.8 235.23V231.58Q735.8 221.51 739.01 212.66Q742.23 203.81 748.04 197.21Q753.86 190.61 762.1 186.88Q770.35 183.15 780.42 183.15Q791.53 183.15 800.03 187.84Q807.15 192 811.84 199.47V153.64H835.97V280.36H816.87V260.75Q816.01 262.66 815.14 264.22Q809.76 273.94 800.99 278.71Q792.22 283.49 781.11 283.49ZM786.49 263.18Q793.61 263.18 799.51 259.97Q805.42 256.75 808.98 250.59Q812.53 244.43 812.53 236.1V229.15Q812.53 220.82 808.89 215.18Q805.24 209.54 799.34 206.5Q793.44 203.46 786.49 203.46Q778.68 203.46 772.69 207.19Q766.7 210.92 763.32 217.69Q759.93 224.46 759.93 233.49Q759.93 242.52 763.41 249.2Q766.88 255.89 772.87 259.53Q778.86 263.18 786.49 263.18ZM858.54 317.51V296.86H876.25Q881.28 296.86 884.66 295.55Q888.05 294.25 890.31 291.39Q892.56 288.52 893.78 283.49L895.17 278.28H879.72L849.16 186.1H873.47L896.38 259.18H900.03L919.12 186.1H942.21L914.26 288.7Q911.49 299.29 906.45 305.62Q901.42 311.96 893.52 314.74Q885.62 317.51 873.99 317.51Z"/>
+    <path id="os" fill="url(#gOS)" d="M1055.57 283.84Q1038.21 283.84 1025.37 277.85Q1012.52 271.86 1004.01 262.05Q995.51 252.24 991.34 240.78Q987.18 229.33 987.18 218.56V214.74Q987.18 202.76 991.52 191.22Q995.86 179.68 1004.54 170.3Q1013.22 160.93 1025.98 155.37Q1038.73 149.82 1055.57 149.82Q1072.24 149.82 1085 155.37Q1097.76 160.93 1106.44 170.3Q1115.12 179.68 1119.55 191.22Q1123.97 202.76 1123.97 214.74V218.56Q1123.97 229.33 1119.72 240.78Q1115.47 252.24 1106.96 262.05Q1098.45 271.86 1085.61 277.85Q1072.76 283.84 1055.57 283.84ZM1055.57 253.63Q1063.91 253.63 1070.5 250.85Q1077.1 248.07 1081.79 243.04Q1086.47 238.01 1088.91 231.32Q1091.34 224.64 1091.34 216.83Q1091.34 208.49 1088.82 201.72Q1086.3 194.95 1081.61 190.09Q1076.93 185.23 1070.33 182.63Q1063.73 180.02 1055.57 180.02Q1047.24 180.02 1040.64 182.63Q1034.05 185.23 1029.36 190.09Q1024.67 194.95 1022.24 201.72Q1019.81 208.49 1019.81 216.83Q1019.81 224.64 1022.24 231.32Q1024.67 238.01 1029.36 243.04Q1034.05 248.07 1040.64 250.85Q1047.24 253.63 1055.57 253.63ZM1186.47 283.84Q1168.76 283.84 1156.7 278.28Q1144.63 272.73 1138.47 263.09Q1132.31 253.46 1132.31 240.96H1163.55Q1163.55 245.47 1166.07 249.2Q1168.59 252.94 1173.62 255.02Q1178.66 257.1 1186.47 257.1Q1193.24 257.1 1198.01 255.37Q1202.79 253.63 1205.3 250.5Q1207.82 247.38 1207.82 243.04Q1207.82 237.48 1203.13 234.45Q1198.45 231.41 1187.34 230.54L1179.18 229.85Q1159.56 228.11 1147.93 217.52Q1136.3 206.93 1136.3 189.4Q1136.3 176.9 1142.11 168.04Q1147.93 159.19 1158.52 154.5Q1169.11 149.82 1183.52 149.82Q1199.14 149.82 1209.99 155.02Q1220.84 160.23 1226.57 169.69Q1232.3 179.16 1232.3 191.65H1201.05Q1201.05 187.49 1198.97 184.02Q1196.88 180.54 1192.98 178.55Q1189.07 176.55 1183.52 176.55Q1178.31 176.55 1174.75 178.2Q1171.19 179.85 1169.37 182.8Q1167.55 185.75 1167.55 189.4Q1167.55 194.26 1170.84 197.73Q1174.14 201.2 1182.3 201.9L1190.46 202.59Q1204.7 203.81 1215.63 208.75Q1226.57 213.7 1232.82 222.21Q1239.07 230.71 1239.07 243.04Q1239.07 255.37 1232.73 264.57Q1226.4 273.77 1214.68 278.8Q1202.96 283.84 1186.47 283.84Z"/>
+  </g>
+</svg>

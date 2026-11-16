@@ -1,0 +1,157 @@
+{
+  "nome": "Raiz",
+  "tipo": "pasta",
+  "id": "template_root_study_os",
+  "local": ".",
+  "filhos": [
+    {
+      "nome": "1° semestre",
+      "tipo": "pasta",
+      "id": "semestre_1",
+      "local": "1° semestre",
+      "filhos": [
+        {
+          "nome": "💻 Algoritmos e Estruturas de Dados",
+          "tipo": "pasta",
+          "id": "materia_aed",
+          "local": "1° semestre/💻 Algoritmos e Estruturas de Dados",
+          "Status": "Em Andamento",
+          "TAGS": "Computação, Algoritmos, Estruturas de Dados",
+          "filhos": [
+            {
+              "nome": "Aula 01",
+              "tipo": "pasta",
+              "id": "aed_aula_01",
+              "local": "1° semestre/💻 Algoritmos e Estruturas de Dados/Aula 01",
+              "data_aula": "2026-02-15",
+              "presenca": true,
+              "revisao": false,
+              "linkNotebookLLM": "https://notebooklm.google.com",
+              "filhos": [
+                {
+                  "nome": "Aula 01 - Análise Assintótica e Notação Big-O.md",
+                  "tipo": "arquivo",
+                  "id": "aed_aula_01_md",
+                  "mimeType": "text/markdown",
+                  "local": "1° semestre/💻 Algoritmos e Estruturas de Dados/Aula 01/Aula 01 - Análise Assintótica e Notação Big-O.md",
+                  "conteudoTexto": "# Aula 01 - Análise Assintótica e Notação Big-O\n\n> 💡 **Template Demonstrativo:** Este é um banco de dados de exemplo (Mockup) do **Study OS**. Você pode explorar livremente as funcionalidades ou importar seus próprios dados via barra lateral.\n\n### 📝 Resumo do Conteúdo\nA análise de complexidade é o alicerce da Ciência da Computação moderna. Avaliamos como o tempo de execução e o consumo de memória escalam à medida que o tamanho da entrada ($N$) tende ao infinito.\n\n### 📚 Tópicos Principais\n1. **Notação Big-O ($O$), Ômega ($\Omega$) e Teta ($\Theta$)**\n2. **Classes de Complexidade:** $O(1)$, $O(\\log N)$, $O(N)$, $O(N \\log N)$, $O(N^2)$\n3. **Trade-offs:** Tempo vs Espaço de Memória\n\n## 📂 Aplicação Prática (Estudo de Caso)\n\n### Estudo de Caso: Busca Binária vs Busca Linear\nAo buscar um registro em um vetor ordenado com 1.000.000 de entradas, a busca linear realiza até 1.000.000 de comparações ($O(N)$), enquanto a busca binária necessita de no máximo 20 comparações ($O(\\log N)$).\n\n```python\ndef busca_binaria(arr, alvo):\n    inicio, fim = 0, len(arr) - 1\n    while inicio <= fim:\n        meio = (inicio + fim) // 2\n        if arr[meio] == alvo:\n            return meio\n        elif arr[meio] < alvo:\n            inicio = meio + 1\n        else:\n            fim = meio - 1\n    return -1\n```\n\n### 🤔 Perguntas para Revisão\n1. Por que ignoramos constantes multiplicativas e termos de menor ordem na notação assintótica?\n2. Em quais cenários um algoritmo $O(N^2)$ pode ser aceitável na prática?\n\n## 🕵️ Ver Solução e Explicação\n\n🔽 **Clique para ver a Solução**\n\n> **Resposta:** Constantes multiplicativas dependem do hardware e do compilador específico, enquanto o comportamento assintótico dita a escalabilidade para conjuntos massivos de dados. Algoritmos $O(N^2)$ como Insertion Sort podem ser vantajosos para conjuntos muito pequenos ($N < 20$) devido à menor sobrecarga de memória.\n\n### ✅ Checklist de Aprendizagem\n- [x] Compreendo a diferença entre pior caso, melhor caso e caso médio.\n- [ ] Sei demonstrar analiticamente por que a busca binária é $O(\\log N)$.\n- [ ] Implementei a busca binária em uma linguagem compilada."
+                }
+              ]
+            },
+            {
+              "nome": "Aula 02",
+              "tipo": "pasta",
+              "id": "aed_aula_02",
+              "local": "1° semestre/💻 Algoritmos e Estruturas de Dados/Aula 02",
+              "data_aula": "2026-02-22",
+              "presenca": true,
+              "revisao": true,
+              "filhos": [
+                {
+                  "nome": "Aula 02 - Estruturas Lineares: Pilhas e Filas.md",
+                  "tipo": "arquivo",
+                  "id": "aed_aula_02_md",
+                  "mimeType": "text/markdown",
+                  "local": "1° semestre/💻 Algoritmos e Estruturas de Dados/Aula 02/Aula 02 - Estruturas Lineares: Pilhas e Filas.md",
+                  "conteudoTexto": "# Aula 02 - Estruturas Lineares: Pilhas (LIFO) e Filas (FIFO)\n\n### 📝 Resumo do Conteúdo\nPilhas e filas são estruturas fundamentais que gerenciam a ordem de processamento de instruções e dados em sistemas operacionais e linguagens de programação.\n\n### 📚 Tópicos Principais\n1. **Pilhas (Stack):** Operações `push()`, `pop()`, `peek()` em tempo constante $O(1)$\n2. **Filas (Queue):** Operações `enqueue()` e `dequeue()` em $O(1)$\n3. **Aplicações:** Call Stack de funções, avaliação de expressões pós-fixas e filas de impressão"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "nome": "🌐 Desenvolvimento Web & Interfaces Modernas",
+          "tipo": "pasta",
+          "id": "materia_web",
+          "local": "1° semestre/🌐 Desenvolvimento Web & Interfaces Modernas",
+          "Status": "Concluído",
+          "TAGS": "Frontend, JavaScript, Arquitetura Web, CSS",
+          "filhos": [
+            {
+              "nome": "Aula 01",
+              "tipo": "pasta",
+              "id": "web_aula_01",
+              "local": "1° semestre/🌐 Desenvolvimento Web & Interfaces Modernas/Aula 01",
+              "data_aula": "2026-02-18",
+              "presenca": true,
+              "filhos": [
+                {
+                  "nome": "Aula 01 - Fundamentos da Arquitetura Cliente-Servidor e Protocolo HTTP.md",
+                  "tipo": "arquivo",
+                  "id": "web_aula_01_md",
+                  "mimeType": "text/markdown",
+                  "local": "1° semestre/🌐 Desenvolvimento Web & Interfaces Modernas/Aula 01/Aula 01 - Fundamentos da Arquitetura Cliente-Servidor e Protocolo HTTP.md",
+                  "conteudoTexto": "# Aula 01 - Arquitetura Cliente-Servidor e Protocolo HTTP\n\n### 📝 Resumo do Conteúdo\nA Web moderna repousa sobre a separação estrita de responsabilidades entre navegadores clientes e servidores de backend. O protocolo HTTP/HTTPS dita o ciclo de vida de requisições e respostas.\n\n### 📚 Tópicos Principais\n1. **Verbos HTTP:** GET, POST, PUT, DELETE, PATCH\n2. **Códigos de Status:** 2xx (Sucesso), 3xx (Redirecionamento), 4xx (Erro do Cliente), 5xx (Erro do Servidor)\n3. **Segurança:** Headers de CORS, certificados TLS e cookies HttpOnly"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "nome": "2° semestre",
+      "tipo": "pasta",
+      "id": "semestre_2",
+      "local": "2° semestre",
+      "filhos": [
+        {
+          "nome": "🗄️ Modelagem de Dados & SQL",
+          "tipo": "pasta",
+          "id": "materia_bd",
+          "local": "2° semestre/🗄️ Modelagem de Dados & SQL",
+          "Status": "Em Andamento",
+          "TAGS": "Banco de Dados, SQL, Postgres, Modelagem",
+          "filhos": [
+            {
+              "nome": "Aula 01",
+              "tipo": "pasta",
+              "id": "bd_aula_01",
+              "local": "2° semestre/🗄️ Modelagem de Dados & SQL/Aula 01",
+              "data_aula": "2026-08-10",
+              "presenca": true,
+              "filhos": [
+                {
+                  "nome": "Aula 01 - Modelo Entidade-Relacionamento e Formas Normais.md",
+                  "tipo": "arquivo",
+                  "id": "bd_aula_01_md",
+                  "mimeType": "text/markdown",
+                  "local": "2° semestre/🗄️ Modelagem de Dados & SQL/Aula 01/Aula 01 - Modelo Entidade-Relacionamento e Formas Normais.md",
+                  "conteudoTexto": "# Aula 01 - Modelo Entidade-Relacionamento (MER) e Formas Normais\n\n### 📝 Resumo do Conteúdo\nA modelagem conceitual precede a implementação física de tabelas relacionais. As formas normais garantem integridade referencial e previnem anomalias de exclusão e inserção.\n\n### 📚 Tópicos Principais\n1. **Primeira Forma Normal (1FN):** Atributos atômicos e ausência de vetores repetitivos\n2. **Segunda Forma Normal (2FN):** Dependência funcional total da chave primária\n3. **Terceira Forma Normal (3FN):** Eliminação de dependências transitivas"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "nome": "🧠 Inteligência Artificial & Aprendizado de Máquina",
+          "tipo": "pasta",
+          "id": "materia_ia",
+          "local": "2° semestre/🧠 Inteligência Artificial & Aprendizado de Máquina",
+          "Status": "Não Iniciado",
+          "TAGS": "Machine Learning, IA, Redes Neurais, Python",
+          "filhos": [
+            {
+              "nome": "Aula 01",
+              "tipo": "pasta",
+              "id": "ia_aula_01",
+              "local": "2° semestre/🧠 Inteligência Artificial & Aprendizado de Máquina/Aula 01",
+              "data_aula": "2026-08-14",
+              "presenca": false,
+              "filhos": [
+                {
+                  "nome": "Aula 01 - Paradigmas de Aprendizado Supervisionado vs Não Supervisionado.md",
+                  "tipo": "arquivo",
+                  "id": "ia_aula_01_md",
+                  "mimeType": "text/markdown",
+                  "local": "2° semestre/🧠 Inteligência Artificial & Aprendizado de Máquina/Aula 01/Aula 01 - Paradigmas de Aprendizado Supervisionado vs Não Supervisionado.md",
+                  "conteudoTexto": "# Aula 01 - Paradigmas de Aprendizado Supervisionado e Não Supervisionado\n\n### 📝 Resumo do Conteúdo\nIntrodução aos alicerces matemáticos do aprendizado de máquina, funções de perda (*Loss Functions*) e otimização por Gradiente Descendente estocástico.\n\n### 📚 Tópicos Principais\n1. **Aprendizado Supervisionado:** Classificação e Regressão Linear/Logística\n2. **Aprendizado Não Supervisionado:** Agrupamento por K-Means e Redução de Dimensionalidade (PCA)\n3. **Generalização:** Prevenção de Overfitting e Underfitting com validação cruzada"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

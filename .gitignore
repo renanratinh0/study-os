@@ -1,0 +1,48 @@
+# Dependências e Builds
+node_modules/
+package-lock.json
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Dados Pessoais e Backups Privados
+db.personal.json
+db_backup*.json
+notebooklm_colecoes_BACKUP*.json
+relatorio_auditoria_aulas.csv
+
+# Credenciais e Segredos (NÃO ENVIAR AO GITHUB)
+notion_config.json
+notion_cache.json
+credentials.json
+token.json
+token.pickle
+*.env
+.env
+.env.local
+.env.*.local
+
+# Python Caches e Ambientes
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# Arquivos temporários e de Sistema
+.DS_Store
+Thumbs.db
+*.tmp
+*.log
+
+# Diretórios de Scratch e IDEs
+.vscode/
+.idea/
+.agents/
+scratch/
+gerador de db/

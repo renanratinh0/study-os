@@ -1,0 +1,23 @@
+{
+  "rules": {
+    "db_json": {
+      ".read": true,
+      ".write": "auth != null"
+    },
+    "fila_md": {
+      ".read": "auth != null",
+      "$item_id": {
+        ".write": "auth != null || (!data.exists() && newData.exists())",
+        ".validate": "newData.hasChildren(['tipo', 'timestamp', 'status']) && newData.child('tipo').isString() && newData.child('tipo').val().length <= 40 && newData.child('timestamp').isNumber()"
+      }
+    },
+    "notion": {
+      ".read": "auth != null",
+      ".write": "auth != null"
+    },
+    "$other": {
+      ".read": false,
+      ".write": false
+    }
+  }
+}
