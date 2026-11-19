@@ -27,13 +27,46 @@ RELATORIO_CSV = PASTA_SCRIPT / "relatorio_auditoria_aulas.csv"
 
 # Extensões aceitas para cada tipo de material.
 EXTENSOES = {
-    "MD": {".md"},
+    "MD": {".md", ".markdown"},
+    "JSON": {".json"},
     "JPG": {".jpg", ".jpeg"},
     "PNG": {".png"},
     "PDF": {".pdf"},
     "MP4": {".mp4"},
     "AUDIO": {".m4a", ".mp4a"},
 }
+
+
+def normalizar_nome_classificacao(nome_arquivo):
+    """Remove acentos e normaliza nome de arquivo para classificação estrita."""
+    sem_acento = "".join(
+        c for c in unicodedata.normalize("NFD", str(nome_arquivo or ""))
+        if unicodedata.category(c) != "Mn"
+    )
+    return Path(sem_acento.strip()).name.lower()
+
+
+def classificar_artefato_arquivo(nome_arquivo):
+    """
+    Classifica arquivos com prioridade estrita por nome (case-insensitive):
+      - *mapa-mental.json -> 'MAPA_MENTAL'
+      - *flashcards.md    -> 'FLASHCARDS'
+      - *quiz.md          -> 'QUIZ'
+      - *relatorio.md     -> 'RELATORIO'
+      - qualquer outro .md -> 'MD' (Camada 1)
+    """
+    nome_norm = normalizar_nome_classificacao(nome_arquivo)
+    if nome_norm.endswith("mapa-mental.json"):
+        return "MAPA_MENTAL"
+    if nome_norm.endswith("flashcards.md"):
+        return "FLASHCARDS"
+    if nome_norm.endswith("quiz.md"):
+        return "QUIZ"
+    if nome_norm.endswith("relatorio.md"):
+        return "RELATORIO"
+    if Path(nome_norm).suffix in EXTENSOES["MD"]:
+        return "MD"
+    return None
 
 CATEGORIAS_OBRIGATORIAS = {
     "MD": "md",
@@ -238,6 +271,10 @@ def auditar_aula(caminho_aula, indice_ocr):
         "MP4": 0,
         "AUDIO": 0,
         "PDF_NAO_CLASSIFICADO": 0,
+        "MAPA_MENTAL": 0,
+        "FLASHCARDS": 0,
+        "QUIZ": 0,
+        "RELATORIO": 0,
     }
 
     arquivos = [
@@ -250,8 +287,21 @@ def auditar_aula(caminho_aula, indice_ocr):
 
     for arquivo in arquivos:
         extensao = arquivo.suffix.lower()
+        role_artefato = classificar_artefato_arquivo(arquivo.name)
 
-        if extensao in EXTENSOES["MD"]:
+        if role_artefato == "MAPA_MENTAL":
+            contagens["MAPA_MENTAL"] += 1
+
+        elif role_artefato == "FLASHCARDS":
+            contagens["FLASHCARDS"] += 1
+
+        elif role_artefato == "QUIZ":
+            contagens["QUIZ"] += 1
+
+        elif role_artefato == "RELATORIO":
+            contagens["RELATORIO"] += 1
+
+        elif role_artefato == "MD":
             contagens["MD"] += 1
 
         elif extensao in EXTENSOES["JPG"]:
@@ -344,6 +394,10 @@ def executar_auditoria():
                     "PDF com OCR": contagens["PDF_COM_OCR"],
                     "MP4": contagens["MP4"],
                     "Audio M4A ou MP4A": contagens["AUDIO"],
+                    "Mapa Mental": contagens["MAPA_MENTAL"],
+                    "Flashcards": contagens["FLASHCARDS"],
+                    "Quiz": contagens["QUIZ"],
+                    "Relatorio": contagens["RELATORIO"],
                     "PDFs nao classificados": contagens["PDF_NAO_CLASSIFICADO"],
                     "Materiais faltando": ", ".join(faltando),
                     "Status": status,
@@ -362,6 +416,10 @@ def executar_auditoria():
         "PDF com OCR",
         "MP4",
         "Audio M4A ou MP4A",
+        "Mapa Mental",
+        "Flashcards",
+        "Quiz",
+        "Relatorio",
         "PDFs nao classificados",
         "Materiais faltando",
         "Status",

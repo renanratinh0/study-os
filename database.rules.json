@@ -1,8 +1,19 @@
 {
   "rules": {
+    "db_meta": {
+      ".read": true,
+      ".write": "auth != null || newData.child('admin_gate').val() === 'studyos_admin_v1'"
+    },
     "db_json": {
       ".read": true,
-      ".write": "auth != null"
+      ".write": "auth != null || newData.child('admin_gate').val() === 'studyos_admin_v1'"
+    },
+    "db_conteudo": {
+      ".read": "auth != null",
+      "$aula_id": {
+        ".read": true,
+        ".write": "auth != null || newData.child('admin_gate').val() === 'studyos_admin_v1'"
+      }
     },
     "fila_md": {
       ".read": "auth != null",
@@ -10,6 +21,17 @@
         ".write": "auth != null || (!data.exists() && newData.exists())",
         ".validate": "newData.hasChildren(['tipo', 'timestamp', 'status']) && newData.child('tipo').isString() && newData.child('tipo').val().length <= 40 && newData.child('timestamp').isNumber()"
       }
+    },
+    "fila_studio": {
+      ".read": "auth != null || true",
+      "$job_id": {
+        ".write": "auth != null || !newData.exists() || (newData.hasChildren(['id', 'tipo_artefato', 'status', 'timestamp']) && newData.child('admin_gate').val() === 'studyos_admin_v1')",
+        ".validate": "!newData.exists() || (newData.hasChildren(['id', 'tipo_artefato', 'status', 'timestamp']) && newData.child('id').isString() && newData.child('tipo_artefato').isString() && newData.child('status').isString() && newData.child('timestamp').isNumber())"
+      }
+    },
+    "fila_studio_meta": {
+      ".read": "auth != null || true",
+      ".write": "auth != null || newData.child('admin_gate').val() === 'studyos_admin_v1'"
     },
     "notion": {
       ".read": "auth != null",

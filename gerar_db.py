@@ -1,5 +1,6 @@
 import os
 import re
+import ast
 import sys
 import json
 import zlib
@@ -41,6 +42,10 @@ BACKUP_NOTEBOOKLM_PATH = Path("notebooklm_colecoes_BACKUP_2026-08-19.json")
 DB_ATUAL_PATH = Path("db.personal.json")
 DB_FALLBACK_PATH = Path("db_backup.json")
 DB_SAIDA_PATH = Path("db.personal.json")
+
+FIREBASE_URL = "https://study-os-beta-default-rtdb.firebaseio.com"
+NOTION_CONFIG_PATH = Path("notion_config.json")
+STUDIO_ADMIN_GATE = "studyos_admin_v1"
 
 CREDENTIALS_PATH = Path("credentials.json")
 TOKEN_JSON_PATH = Path("token.json")
@@ -156,11 +161,369 @@ def ler_conteudo_markdown(caminho: Path) -> str:
     return ""
 
 
+def normalizar_nome_classificacao(nome: str) -> str:
+    """Remove acentos e normaliza para lowercase para classificação estrita por nome."""
+    sem_acento = "".join(
+        c for c in unicodedata.normalize("NFD", str(nome or ""))
+        if unicodedata.category(c) != "Mn"
+    )
+    return Path(sem_acento.strip()).name.lower()
+
+
+def classificar_artefato_arquivo(nome_arquivo: str) -> str:
+    """
+    Classifica arquivos da aula com prioridade estrita por nome (case-insensitive):
+      - *mapa-mental.json -> 'mindmap'
+      - *flashcards.md    -> 'flashcards'
+      - *quiz.md          -> 'quiz'
+      - *relatorio.md     -> 'relatorio'
+      - qualquer outro .md/.markdown -> 'md_principal'
+      - demais arquivos   -> 'outro'
+    """
+    nome_norm = normalizar_nome_classificacao(nome_arquivo)
+    if nome_norm.endswith("mapa-mental.json"):
+        return "mindmap"
+    if nome_norm.endswith("flashcards.md"):
+        return "flashcards"
+    if nome_norm.endswith("quiz.md"):
+        return "quiz"
+    if nome_norm.endswith("relatorio.md"):
+        return "relatorio"
+    if Path(nome_norm).suffix in (".md", ".markdown"):
+        return "md_principal"
+    return "outro"
+
+
+def ler_conteudo_json(caminho: Path):
+    """Lê e faz o parsing seguro de um arquivo JSON da aula."""
+    texto = ler_conteudo_markdown(caminho)
+    if not texto.strip():
+        return None
+    try:
+        return json.loads(texto)
+    except Exception:
+        return None
+
+
+def limpar_flashcards_markdown_notebooklm(texto: str) -> str:
+    """Converte wrappers `{'flashcardContentBlock': [...]}` em Markdown limpo."""
+    if not texto or "flashcardContentBlock" not in texto:
+        return texto
+
+    linhas_out = []
+    for linha in str(texto).splitlines():
+        if "flashcardContentBlock" in linha and "{" in linha:
+            idx = linha.find("{")
+            prefixo = linha[:idx]
+            bruto = linha[idx:].strip()
+            obj = None
+            try:
+                obj = ast.literal_eval(bruto)
+            except Exception:
+                try:
+                    obj = json.loads(bruto)
+                except Exception:
+                    obj = None
+
+            if isinstance(obj, dict) and isinstance(obj.get("flashcardContentBlock"), list):
+                partes = []
+                for b in obj["flashcardContentBlock"]:
+                    if not isinstance(b, dict):
+                        continue
+                    if b.get("type") == "text" and b.get("content"):
+                        partes.append(str(b["content"]).strip())
+                    elif b.get("type") == "image" and b.get("alt"):
+                        partes.append(f"[Imagem: {str(b['alt']).strip()}]")
+                    elif b.get("content"):
+                        partes.append(str(b["content"]).strip())
+                combinado = "\n".join(p for p in partes if p).strip()
+                if combinado:
+                    linhas_out.append(f"{prefixo}{combinado}")
+                    continue
+
+        linhas_out.append(linha)
+
+    sufixo = "\n" if str(texto).endswith("\n") else ""
+    return "\n".join(linhas_out) + sufixo
+
+
+def obter_firebase_secret() -> str:
+    secret = os.environ.get("FIREBASE_SECRET", "").strip()
+    if secret:
+        return secret
+    if NOTION_CONFIG_PATH.exists():
+        try:
+            cfg = carregar_json_seguro(NOTION_CONFIG_PATH) or {}
+            return str(cfg.get("firebase_secret") or "").strip()
+        except Exception:
+            pass
+    return ""
+
+
+def firebase_url_auth(caminho: str) -> str:
+    base = f"{FIREBASE_URL.rstrip('/')}/{caminho.lstrip('/')}"
+    secret = obter_firebase_secret()
+    if secret:
+        sep = "&" if "?" in base else "?"
+        return f"{base}{sep}auth={urllib.parse.quote(secret)}"
+    return base
+
+
+def carregar_db_firebase() -> dict:
+    """Busca o `/db_json` atual do Firebase RTDB para preservar atividades e datas do Notion."""
+    url = firebase_url_auth("db_json.json")
+    try:
+        req = urllib.request.Request(url, headers={"User-Agent": "StudyOS-GeradorDB/3.2"}, method="GET")
+        with urllib.request.urlopen(req, timeout=25) as resp:
+            raw = resp.read().decode("utf-8", errors="replace")
+            dados = json.loads(raw) if raw else None
+            if isinstance(dados, dict) and dados.get("filhos"):
+                print("☁️ Firebase (/db_json) carregado para preservar atividades, capas e datas das aulas.")
+                return dados
+    except Exception as e:
+        print(f"⚠️ Aviso ao ler Firebase (/db_json): {e}")
+    return {}
+
+
+def slugify_py(texto: str) -> str:
+    """Normaliza string em slug idêntico ao `slugify` do frontend."""
+    s = "".join(
+        c for c in unicodedata.normalize("NFD", str(texto or ""))
+        if unicodedata.category(c) != "Mn"
+    )
+    return re.sub(r"[^a-z0-9]+", "-", s.lower()).strip("-") or "item"
+
+
+def extrair_titulo_h1_markdown(texto: str) -> str:
+    """Extrai e limpa o título principal H1 de um arquivo Markdown (máx. 200 caracteres)."""
+    if not texto:
+        return ""
+    sem_yaml = re.sub(r"^\ufeff?\s*---\r?\n[\s\S]*?\r?\n---\s*(?:\r?\n|$)", "", str(texto)).strip()
+    linhas = [ln.strip() for ln in sem_yaml.splitlines() if ln.strip()]
+    linha_h1 = next((ln for ln in linhas if re.match(r"^(?:\\?#)+", ln)), linhas[0] if linhas else "")
+    if not linha_h1:
+        return ""
+    limpo = re.sub(r"^(?:\\?#)+\s*", "", linha_h1).strip()
+    limpo = re.sub(
+        r"^(?:aula\s*\d+|aula\s*(?:de\s+)?conclus[aã]o|aula\s*(?:de\s+)?introdu[cç][aã]o|aula)\s*[-:–—|]\s*",
+        "",
+        limpo,
+        flags=re.IGNORECASE,
+    ).strip()
+    return limpo[:200] if len(limpo) <= 240 else ""
+
+
+def _eh_novo_artefato_dict(item: dict) -> bool:
+    role = str(item.get("artifactRole") or "").strip().lower()
+    nome_low = str(item.get("nome") or "").strip().lower()
+    return role in ("mindmap", "flashcards", "quiz", "relatorio") or nome_low.endswith(
+        ("mapa-mental.json", "flashcards.md", "quiz.md", "relatorio.md")
+    )
+
+
+def _copiar_no_leve(valor):
+    if isinstance(valor, list):
+        return [_copiar_no_leve(v) for v in valor]
+    if not isinstance(valor, dict):
+        return valor
+    out = {}
+    h1_salvo = str(valor.get("tituloH1") or "").strip()
+    if not h1_salvo and isinstance(valor.get("conteudoTexto"), str) and not _eh_novo_artefato_dict(valor):
+        h1_salvo = extrair_titulo_h1_markdown(valor["conteudoTexto"])
+    for k, v in valor.items():
+        if k in ("conteudoTexto", "conteudoJson"):
+            continue
+        out[k] = _copiar_no_leve(v)
+    if h1_salvo:
+        out["tituloH1"] = h1_salvo
+    return out
+
+
+def gerar_catalogo_leve_db(db_final: dict) -> dict:
+    """Remove textos/JSONs pesados mantendo `tituloH1` e metadados dos arquivos/artefatos."""
+    if not isinstance(db_final, dict):
+        return {}
+    leve = _copiar_no_leve(db_final)
+    leve["admin_gate"] = STUDIO_ADMIN_GATE
+    if not leve.get("atualizado_em"):
+        leve["atualizado_em"] = int(time.time() * 1000)
+    return leve
+
+
+def atribuir_chaves_conteudo_db(db_final: dict) -> list:
+    """
+    Calcula a chave única de `/db_conteudo/{chave}` para cada aula (usando o slug compatível
+    com `aula.id`, e desambiguando com `conteudoId` quando disciplinas distintas colidem no slug,
+    como `C` e `C++`). Retorna lista de `(chave_aula, aula_node)`.
+    """
+    entradas = []
+    contagem_slugs = {}
+    for sem in db_final.get("filhos", []):
+        sem_nome = sem.get("nome", "")
+        for mat in sem.get("filhos", []):
+            mat_nome = mat.get("nome", "")
+            mat_limpo = re.sub(r"^[^\w\s]+\s*", "", mat_nome).strip() or mat_nome
+            for aula in mat.get("filhos", []):
+                if not isinstance(aula, dict) or (aula.get("tipo") != "pasta" and not isinstance(aula.get("filhos"), list)):
+                    continue
+                aula_slug = slugify_py(f"{sem_nome}-{mat_limpo}-{aula.get('nome', '')}")
+                contagem_slugs[aula_slug] = contagem_slugs.get(aula_slug, 0) + 1
+                entradas.append((aula_slug, aula))
+
+    pares = []
+    for aula_slug, aula in entradas:
+        if contagem_slugs.get(aula_slug, 0) > 1 and aula.get("id"):
+            chave = str(aula["id"])
+            aula["conteudoId"] = chave
+        else:
+            chave = str(aula.get("conteudoId") or aula_slug)
+        pares.append((chave, aula))
+    return pares
+
+
+def _sanitizar_chave_firebase(chave: str) -> str:
+    """Substitui caracteres proibidos em chaves do Firebase RTDB: . $ # [ ] /"""
+    substituicoes = {".": "_p_", "$": "_ds_", "#": "_h_", "[": "_bo_", "]": "_bc_", "/": "_sl_"}
+    for k, v in substituicoes.items():
+        chave = chave.replace(k, v)
+    return chave
+
+
+def extrair_conteudo_aula_para_firebase(aula_node: dict) -> dict:
+    """Extrai MDs e artefatos inline de uma aula para `/db_conteudo/{chave}`."""
+    mds = {}
+    artifacts = {}
+    for item in aula_node.get("filhos", []):
+        if not isinstance(item, dict) or item.get("tipo") == "pasta":
+            continue
+        nome = str(item.get("nome") or "").strip()
+        role = classificar_artefato_arquivo(nome)
+        if role in ("mindmap", "flashcards", "quiz", "relatorio"):
+            entry = {"nome": nome}
+            if role == "mindmap" and item.get("conteudoJson") is not None:
+                entry["conteudoJson"] = item["conteudoJson"]
+            if item.get("conteudoTexto"):
+                entry["conteudoTexto"] = item["conteudoTexto"]
+            if "conteudoJson" in entry or "conteudoTexto" in entry:
+                artifacts[role] = entry
+        elif (role == "md_principal" or nome.lower().endswith((".md", ".markdown"))) and item.get("conteudoTexto"):
+            if nome:
+                mds[_sanitizar_chave_firebase(nome)] = item["conteudoTexto"]
+
+    raw_arts = aula_node.get("artifacts")
+    if isinstance(raw_arts, dict):
+        for role in ("mindmap", "flashcards", "quiz", "relatorio"):
+            val = raw_arts.get(role)
+            if isinstance(val, dict):
+                entry = {"nome": str(val.get("nome") or role)}
+                if role == "mindmap" and val.get("conteudoJson") is not None:
+                    entry["conteudoJson"] = val["conteudoJson"]
+                if val.get("conteudoTexto"):
+                    entry["conteudoTexto"] = val["conteudoTexto"]
+                if "conteudoJson" in entry or "conteudoTexto" in entry:
+                    artifacts[role] = entry
+
+    return {
+        "admin_gate": STUDIO_ADMIN_GATE,
+        "atualizado_em": int(time.time() * 1000),
+        "mds": mds,
+        "artifacts": artifacts,
+    }
+
+
+def _firebase_put_json(caminho: str, payload: dict, timeout: int = 45) -> bool:
+    url = firebase_url_auth(f"{caminho.strip('/')}.json")
+    body = json.dumps(payload, ensure_ascii=False).encode("utf-8")
+    req = urllib.request.Request(
+        url,
+        data=body,
+        headers={"Content-Type": "application/json", "User-Agent": "StudyOS-GeradorDB/3.2"},
+        method="PUT",
+    )
+    with urllib.request.urlopen(req, timeout=timeout) as resp:
+        return resp.status in (200, 204)
+
+
+def enviar_db_para_firebase(db_final: dict) -> bool:
+    """
+    Envia o Catálogo Leve (sem textos/JSONs inline) para `/db_json`, grava versão em
+    `/db_meta` e envia os conteúdos sob demanda apenas das aulas com arquivos em `/db_conteudo/{chave}`.
+    """
+    if not isinstance(db_final, dict):
+        return False
+    agora_ms = int(db_final.get("atualizado_em") or int(time.time() * 1000))
+    db_final["admin_gate"] = STUDIO_ADMIN_GATE
+    db_final["atualizado_em"] = agora_ms
+
+    pares_aulas = atribuir_chaves_conteudo_db(db_final)
+    catalogo_leve = gerar_catalogo_leve_db(db_final)
+    body_leve = json.dumps(catalogo_leve, ensure_ascii=False).encode("utf-8")
+    body_bruto = json.dumps(db_final, ensure_ascii=False).encode("utf-8")
+    print(
+        f"☁️ Enviando catálogo leve ({len(body_leve) / (1024 * 1024):.2f} MB vs "
+        f"{len(body_bruto) / (1024 * 1024):.2f} MB bruto) para Firebase (/db_json)..."
+    )
+    try:
+        url = firebase_url_auth("db_json.json")
+        req = urllib.request.Request(
+            url,
+            data=body_leve,
+            headers={"Content-Type": "application/json", "User-Agent": "StudyOS-GeradorDB/3.2"},
+            method="PUT",
+        )
+        with urllib.request.urlopen(req, timeout=90) as resp:
+            ok = resp.status in (200, 204)
+            if not ok:
+                return False
+
+        _firebase_put_json("db_meta", {
+            "atualizado_em": agora_ms,
+            "modo": "catalogo_leve",
+            "admin_gate": STUDIO_ADMIN_GATE,
+        }, timeout=25)
+
+        pendencias = []
+        for chave_aula, aula_node in pares_aulas:
+            payload_aula = extrair_conteudo_aula_para_firebase(aula_node)
+            if payload_aula["mds"] or payload_aula["artifacts"]:
+                pendencias.append((chave_aula, payload_aula))
+
+        enviados_ok = 0
+        if pendencias:
+            print(f"📚 Enviando conteúdo sob demanda de {len(pendencias)} aulas para Firebase (/db_conteudo)...")
+            with ThreadPoolExecutor(max_workers=8) as pool:
+                futs = {
+                    pool.submit(_firebase_put_json, f"db_conteudo/{chave}", pl, 30): chave
+                    for chave, pl in pendencias
+                }
+                for fut in as_completed(futs):
+                    try:
+                        if fut.result():
+                            enviados_ok += 1
+                    except Exception:
+                        pass
+            print(f"   ✅ Conteúdos sob demanda enviados: {enviados_ok}/{len(pendencias)} aulas!")
+
+        print("   ✅ Firebase (/db_json + /db_meta + /db_conteudo) atualizado com sucesso!")
+        return True
+    except urllib.error.HTTPError as e:
+        if e.code in (401, 403):
+            print("   ⚠️ Firebase retornou HTTP 401/403 (Permissão negada ao escrever em /db_json).")
+            print("   👉 Para ativar a gravação automática na nuvem, cole o conteúdo de `database.rules.json`")
+            print("      na aba Regras do Console do Firebase Realtime Database (ou adicione `firebase_secret` em `notion_config.json`).")
+        else:
+            print(f"   ⚠️ Falha HTTP {e.code} ao atualizar Firebase (/db_json): {e.reason}")
+    except Exception as e:
+        print(f"   ⚠️ Falha ao enviar para o Firebase (/db_json): {e}")
+    return False
+
+
 def detectar_mime_type(caminho: Path) -> str:
     ext = caminho.suffix.lower()
     mapa = {
         ".md": "text/markdown",
         ".markdown": "text/markdown",
+        ".json": "application/json",
         ".txt": "text/plain",
         ".c": "text/plain",
         ".cpp": "text/plain",
@@ -955,39 +1318,91 @@ def obter_link_aula_da_colecao(nome_aula: str, colecao: dict) -> str:
     return ""
 
 
-def indexar_db_existente(db_antigo: dict) -> dict:
+def _valor_placeholder_prof(val: str) -> bool:
+    low = str(val or "").strip().lower()
+    return not low or low in ("professor a definir", "curso livre / formação") or "por favor digite" in low
+
+
+def _mesclar_node_cache(mapa: dict, chave, node: dict) -> None:
+    if not isinstance(node, dict) or not chave:
+        return
+    atual = mapa.get(chave)
+    if not isinstance(atual, dict):
+        mapa[chave] = dict(node)
+        return
+
+    for k, v in node.items():
+        if k in ("filhos",):
+            continue
+        if v is None or v == "":
+            continue
+        if k == "prof":
+            if not _valor_placeholder_prof(v) or _valor_placeholder_prof(atual.get("prof", "")):
+                atual[k] = v
+        elif k == "id":
+            if len(str(v)) > 10 and (not atual.get("id") or len(str(atual.get("id"))) <= 10):
+                atual[k] = v
+        elif k in ("atividades", "tags"):
+            if isinstance(v, list) and len(v) > 0:
+                atual[k] = v
+        else:
+            atual[k] = v
+
+
+def indexar_db_existente(*dbs_antigos: dict) -> dict:
     cache = {
         "por_local": {},
         "por_nome_disciplina": {},
         "por_aula_e_arquivo": {},
+        "por_disc_e_aula": {},
     }
-    if not db_antigo:
-        return cache
 
     def percorrer(node, nome_disc="", nome_aula=""):
         if not isinstance(node, dict):
             return
         local_norm = str(node.get("local", "")).replace("\\", "/").strip("/")
         if local_norm:
-            cache["por_local"][local_norm] = node
-            cache["por_local"][local_norm.lower()] = node
+            _mesclar_node_cache(cache["por_local"], local_norm, node)
+            _mesclar_node_cache(cache["por_local"], local_norm.lower(), node)
 
         nome_atual = node.get("nome", "")
-        if any(k in node for k in ("prof", "Status", "cover", "TAGS")):
+        if any(k in node for k in ("prof", "Status", "cover", "TAGS", "atividades")):
             norm_d = normalizar_texto(nome_atual)
             if norm_d:
-                cache["por_nome_disciplina"][norm_d] = node
+                _mesclar_node_cache(cache["por_nome_disciplina"], norm_d, node)
             nome_disc = nome_atual
-        elif node.get("tipo") == "pasta" and "aula" in normalizar_texto(nome_atual):
+        elif node.get("tipo") == "pasta" and (
+            "aula" in normalizar_texto(nome_atual) or "conclusao" in normalizar_texto(nome_atual)
+        ):
             nome_aula = nome_atual
+            if nome_disc:
+                nums_k = (999,) if eh_aula_conclusao(nome_atual) else extrair_numeros_aula(nome_atual)
+                chave_da = (normalizar_texto(nome_disc), nums_k)
+                _mesclar_node_cache(cache["por_disc_e_aula"], chave_da, node)
         elif node.get("tipo") == "arquivo" and nome_atual:
             chave = (normalizar_texto(nome_disc), extrair_numeros_aula(nome_aula), normalizar_nome_arquivo(nome_atual))
-            cache["por_aula_e_arquivo"][chave] = node
+            _mesclar_node_cache(cache["por_aula_e_arquivo"], chave, node)
+
+        artifacts = node.get("artifacts")
+        if isinstance(artifacts, dict):
+            for art_item in artifacts.values():
+                if not isinstance(art_item, dict):
+                    continue
+                art_local = str(art_item.get("local", "")).replace("\\", "/").strip("/")
+                if art_local:
+                    _mesclar_node_cache(cache["por_local"], art_local, art_item)
+                    _mesclar_node_cache(cache["por_local"], art_local.lower(), art_item)
+                art_nome = art_item.get("nome", "")
+                if art_nome:
+                    chave_art = (normalizar_texto(nome_disc), extrair_numeros_aula(nome_aula), normalizar_nome_arquivo(art_nome))
+                    _mesclar_node_cache(cache["por_aula_e_arquivo"], chave_art, art_item)
 
         for filho in node.get("filhos", []):
             percorrer(filho, nome_disc, nome_aula)
 
-    percorrer(db_antigo)
+    for db_item in dbs_antigos:
+        if isinstance(db_item, dict) and db_item:
+            percorrer(db_item)
     return cache
 
 
@@ -1066,13 +1481,16 @@ def escanear_pasta_aula(
     drive_api: GoogleDriveManager,
     estatisticas: dict,
 ) -> dict:
+    nums = extrair_numeros_aula(pasta_aula.name)
+    nums_chave = (999,) if eh_aula_conclusao(pasta_aula.name) else nums
+    chave_disc_aula = (normalizar_texto(nome_disciplina), nums_chave)
     nodo_antigo = (
         cache_antigo["por_local"].get(caminho_relativo_aula)
         or cache_antigo["por_local"].get(caminho_relativo_aula.lower())
+        or cache_antigo["por_disc_e_aula"].get(chave_disc_aula)
         or {}
     )
 
-    nums = extrair_numeros_aula(pasta_aula.name)
     id_backup_aula = colecao_nb["idPastaPorNumero"].get(nums, "") if (colecao_nb and nums) else ""
 
     aula_id = resolver_id_item(
@@ -1089,6 +1507,7 @@ def escanear_pasta_aula(
         estatisticas["ids_pastas_para_publicar"].append(aula_id)
 
     arquivos_nodos = []
+    artifacts_aula = {}
     itens_ordenados = sorted(pasta_aula.iterdir(), key=lambda p: (not p.is_dir(), p.name.lower()))
 
     for item in itens_ordenados:
@@ -1109,6 +1528,13 @@ def escanear_pasta_aula(
                 item, rel_item, nome_disciplina, aula_id, None,
                 cache_antigo, drivefs_map, drive_api, estatisticas
             )
+            sub_artifacts = sub_nodo.pop("artifacts", None)
+            if isinstance(sub_artifacts, dict):
+                for role_key, role_val in sub_artifacts.items():
+                    if role_key not in artifacts_aula:
+                        artifacts_aula[role_key] = role_val
+            for url_key in ("mindmapUrl", "flashcardsUrl", "quizUrl", "relatorioUrl"):
+                sub_nodo.pop(url_key, None)
             arquivos_nodos.append(sub_nodo)
         else:
             item_id = resolver_id_item(
@@ -1127,6 +1553,7 @@ def escanear_pasta_aula(
                 estatisticas["arquivos_sem_id"] += 1
 
             mime = detectar_mime_type(item)
+            role_artefato = classificar_artefato_arquivo(item.name)
             arq_dict = {
                 "nome": item.name,
                 "tipo": "arquivo",
@@ -1138,9 +1565,36 @@ def escanear_pasta_aula(
             if item_id:
                 arq_dict["link_web"] = f"https://drive.google.com/file/d/{item_id}/preview"
 
-            if item.suffix.lower() in (".md", ".markdown"):
+            # REGRA CRÍTICA Nº 1: Triagem estrita dos 4 novos artefatos sem sobrescrever Camada 1 (.md)
+            # e sem enviar mapa-mental.json para os datasets brutos do Cofre Admin (Camada 11).
+            if role_artefato == "mindmap":
+                texto_json = ler_conteudo_markdown(item) or antigo_item.get("conteudoTexto", "")
+                dados_json = ler_conteudo_json(item)
+                if dados_json is None and isinstance(antigo_item.get("conteudoJson"), dict):
+                    dados_json = antigo_item.get("conteudoJson")
+                arq_dict["artifactRole"] = "mindmap"
+                if texto_json:
+                    arq_dict["conteudoTexto"] = texto_json
+                if dados_json is not None:
+                    arq_dict["conteudoJson"] = dados_json
+                artifacts_aula["mindmap"] = arq_dict
+                continue
+
+            if role_artefato in ("flashcards", "quiz", "relatorio"):
+                texto_art = ler_conteudo_markdown(item) or antigo_item.get("conteudoTexto", "")
+                if role_artefato == "flashcards":
+                    texto_art = limpar_flashcards_markdown_notebooklm(texto_art)
+                arq_dict["artifactRole"] = role_artefato
+                arq_dict["conteudoTexto"] = texto_art
+                artifacts_aula[role_artefato] = arq_dict
+                continue
+
+            if role_artefato == "md_principal" or item.suffix.lower() in (".md", ".markdown"):
                 texto_md = ler_conteudo_markdown(item) or antigo_item.get("conteudoTexto", "")
                 arq_dict["conteudoTexto"] = texto_md
+                titulo_h1 = extrair_titulo_h1_markdown(texto_md)
+                if titulo_h1:
+                    arq_dict["tituloH1"] = titulo_h1
 
             elif item.suffix.lower() == ".pdf":
                 info_ocr = verificar_pdf_ocr(item, antigo_item)
@@ -1162,7 +1616,7 @@ def escanear_pasta_aula(
         if not (colecao_nb and colecao_nb["normNome"] == "c++"):
             link_nb = nodo_antigo.get("linkNotebookLLM", "")
 
-    return {
+    aula_node = {
         "nome": pasta_aula.name,
         "tipo": "pasta",
         "id": aula_id,
@@ -1170,6 +1624,23 @@ def escanear_pasta_aula(
         "filhos": arquivos_nodos,
         "linkNotebookLLM": link_nb,
     }
+
+    for campo_meta in ("data_aula", "presenca", "revisao", "linkDrive", "linkGoogleDrive"):
+        if campo_meta in nodo_antigo and nodo_antigo[campo_meta] is not None and nodo_antigo[campo_meta] != "":
+            aula_node[campo_meta] = nodo_antigo[campo_meta]
+
+    if artifacts_aula:
+        aula_node["artifacts"] = artifacts_aula
+        if "mindmap" in artifacts_aula:
+            aula_node["mindmapUrl"] = artifacts_aula["mindmap"].get("local", "")
+        if "flashcards" in artifacts_aula:
+            aula_node["flashcardsUrl"] = artifacts_aula["flashcards"].get("local", "")
+        if "quiz" in artifacts_aula:
+            aula_node["quizUrl"] = artifacts_aula["quiz"].get("local", "")
+        if "relatorio" in artifacts_aula:
+            aula_node["relatorioUrl"] = artifacts_aula["relatorio"].get("local", "")
+
+    return aula_node
 
 
 def construir_disciplina_do_disco(
@@ -1244,7 +1715,7 @@ def construir_disciplina_do_disco(
     status_padrao = "andamento" if eh_pasta_cursos else "aprovado"
     tags_padrao = f"2026,{nome_semestre},Curso" if eh_pasta_cursos else f"2026,{nome_semestre}"
 
-    return {
+    disc_node = {
         "nome": nome_exibicao,
         "tipo": "pasta",
         "id": drive_id_final,
@@ -1256,6 +1727,13 @@ def construir_disciplina_do_disco(
         "TAGS": nodo_antigo.get("TAGS") or tags_padrao,
         "gemini": nodo_antigo.get("gemini") or "",
     }
+    if nodo_antigo.get("status"):
+        disc_node["status"] = nodo_antigo["status"]
+    if isinstance(nodo_antigo.get("tags"), list) and nodo_antigo["tags"]:
+        disc_node["tags"] = nodo_antigo["tags"]
+    if isinstance(nodo_antigo.get("atividades"), list) and nodo_antigo["atividades"]:
+        disc_node["atividades"] = nodo_antigo["atividades"]
+    return disc_node
 
 
 def localizar_diretorio_drive() -> Path:
@@ -1274,9 +1752,10 @@ def main():
     print("=" * 78)
     print(f"🔍 Motor de verificação de OCR em PDF ativo: [{BIBLIOTECA_PDF.upper()}]")
 
-    # 1. Carrega db.json anterior
+    # 1. Carrega db.json anterior e mescla com o /db_json atual do Firebase (atividades, capas, datas)
     db_antigo = carregar_json_seguro(DB_ATUAL_PATH) or carregar_json_seguro(DB_FALLBACK_PATH) or {}
-    cache_antigo = indexar_db_existente(db_antigo)
+    db_firebase = carregar_db_firebase()
+    cache_antigo = indexar_db_existente(db_antigo, db_firebase)
 
     # 2. Carrega backup do NotebookLM
     colecoes_nb = carregar_mapa_notebooklm(BACKUP_NOTEBOOKLM_PATH)
@@ -1373,16 +1852,22 @@ def main():
             "tipo": "pasta",
             "id": id_raiz_drive,
             "local": ".",
+            "admin_gate": STUDIO_ADMIN_GATE,
+            "atualizado_em": int(time.time() * 1000),
             "filhos": pastas_raiz_nodos,
         }
     else:
         print("⚠️ Pasta G:\\Meu Drive\\CienciaComputacao não encontrada montada.")
-        db_final = db_antigo
+        db_final = db_antigo if isinstance(db_antigo, dict) else {}
+        db_final["admin_gate"] = STUDIO_ADMIN_GATE
+        db_final["atualizado_em"] = int(time.time() * 1000)
 
+    atribuir_chaves_conteudo_db(db_final)
     DB_SAIDA_PATH.write_text(
         json.dumps(db_final, ensure_ascii=False, indent=2),
         encoding="utf-8",
     )
+    fb_enviado = enviar_db_para_firebase(db_final)
 
     duracao = time.time() - inicio_t
     total_materias = sum(len(s.get("filhos", [])) for s in db_final.get("filhos", []))
@@ -1400,6 +1885,7 @@ def main():
     print(f"   • Arquivos com ID do Google Drive : {estatisticas['arquivos_com_id']} (Sem ID: {estatisticas['arquivos_sem_id']})")
     print(f"   • PDFs Verificados (OCR)          : {estatisticas['total_pdfs']} "
           f"(🔍 Com OCR: {estatisticas['com_ocr']} | 🖼️ Sem OCR: {estatisticas['sem_ocr']})")
+    print(f"   • Sincronização Firebase /db_json : {'✅ Enviado' if fb_enviado else '⚠️ Pendente (verifique regras/secret Firebase)'}")
     print("=" * 78)
 
 

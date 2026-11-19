@@ -40,9 +40,17 @@ Thumbs.db
 *.tmp
 *.log
 
-# Diretórios de Scratch e IDEs
+# Diretórios de Scratch, IDEs e Produção de Vídeo Bruta
 .vscode/
 .idea/
 .agents/
+.claude/
+agent/
+videos/
+skills-lock.json
+assets/raw-recording.mp4
+assets/study-os-linkedin-showcase.mp4
+staging/
+fila_studio.json
 scratch/
 gerador de db/

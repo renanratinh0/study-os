@@ -15,7 +15,7 @@ export const EMPTY_DB_JSON = {
  * 🔗 URL do Firebase Realtime Database para a fila de sincronização
  * de edições de Markdown, atividades, metadados e controle de aulas.
  */
-export const FIREBASE_RTDB_URL = "https://study-os-fcc4a-default-rtdb.firebaseio.com";
+export const FIREBASE_RTDB_URL = "https://study-os-beta-default-rtdb.firebaseio.com";
 
 /**
  * Lista de mídias suportadas e configuradas para exibição sob demanda nas aulas.
@@ -26,14 +26,19 @@ export const OPCOES_MIDIA_AULA = [
   { id: "pdf", ordem: "3", icone: "📄", label: "3. PDF Sem OCR", corAtiva: "bg-rose-500/20 text-rose-200 border-rose-400/60 shadow-xs" },
   { id: "video", ordem: "4", icone: "🎬", label: "4. Vídeo", corAtiva: "bg-purple-500/20 text-purple-200 border-purple-400/60 shadow-xs" },
   { id: "audio", ordem: "5", icone: "🎧", label: "5. M4A", corAtiva: "bg-pink-500/20 text-pink-200 border-pink-400/60 shadow-xs" },
-  { id: "notebook", ordem: "6", icone: "🤖", label: "6. NotebookLM", corAtiva: "bg-indigo-500/25 text-indigo-200 border-indigo-400/60 shadow-xs" }
+  { id: "mindmap", ordem: "6", icone: "🧠", label: "6. Mapa Mental", corAtiva: "bg-cyan-500/20 text-cyan-200 border-cyan-400/60 shadow-xs" },
+  { id: "flashcards", ordem: "7", icone: "🃏", label: "7. Flashcards", corAtiva: "bg-violet-500/20 text-violet-200 border-violet-400/60 shadow-xs" },
+  { id: "quiz", ordem: "8", icone: "🎯", label: "8. Quiz", corAtiva: "bg-orange-500/20 text-orange-200 border-orange-400/60 shadow-xs" },
+  { id: "relatorio", ordem: "9", icone: "📄", label: "9. Relatório", corAtiva: "bg-sky-500/20 text-sky-200 border-sky-400/60 shadow-xs" },
+  { id: "notebook", ordem: "10", icone: "🤖", label: "10. NotebookLM", corAtiva: "bg-indigo-500/25 text-indigo-200 border-indigo-400/60 shadow-xs" }
 ];
 
 /**
  * Mapeamento de presets rápidos de filtros de mídias para a barra de seleção da matéria.
  */
 export const PRESETS_MIDIA = {
-  "todas": ["md", "img", "pdf", "video", "audio", "notebook"],
+  "todas": ["md", "img", "pdf", "video", "audio", "mindmap", "flashcards", "quiz", "relatorio", "notebook"],
+  "interativos": ["mindmap", "flashcards", "quiz", "relatorio"],
   "img+pdf": ["img", "pdf"],
   "md+img": ["md", "img"],
   "img+audio": ["img", "audio"],
@@ -55,7 +60,9 @@ export const STORAGE_KEYS = {
   DB_CACHE: "studyos_db_v3",
   MD_EDITS_CACHE: "studyos_md_edits_cache",
   BASE_MEDIA_PATH: "studyos_base_media_path",
-  THEME: "studyos_theme"
+  THEME: "studyos_theme",
+  FLASHCARDS_SRS: "studyos_flashcards_srs_v1",
+  QUIZ_PROGRESS: "studyos_quiz_progress_v1"
 };
 
 /**

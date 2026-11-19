@@ -9,12 +9,17 @@ import { store, calcularStatusAula, verificarLinkNotebookDuplicado } from "../co
 import { OPCOES_MIDIA_AULA } from "../core/constants.js";
 import { escapeHtml, slugify, obterTituloAula } from "../utils/domHelpers.js";
 import { limparMarkdownDaAula, obterHtmlMarkdownParseado } from "../utils/markdownParser.js";
-import { resolverFontesMidia, revogarBlobsDaAula } from "../services/mediaResolver.js";
+import { resolverFontesMidia, revogarBlobsDaAula, resolverArtefatosAula, carregarConteudoArtefato } from "../services/mediaResolver.js";
 import { observarMidiasLazy } from "../utils/performance.js";
 import { salvarEdicaoMdCache } from "../services/storage.js";
-import { enviarFilaEdicaoMd } from "../services/api.js";
+import { enviarFilaEdicaoMd, hidratarConteudoAulaSobDemanda } from "../services/api.js";
 import { mostrarToast } from "../utils/domHelpers.js";
 import { isAdminAutenticado } from "../services/auth.js";
+import { classificarArquivoArtefato } from "../utils/artifactsClassifier.js";
+import { renderMindmapSectionHtml, mountNeuralMindmap, destroyNeuralMindmap } from "./NeuralMindmapCanvas.js";
+import { renderFlashcardsSectionHtml, mountFlashcardsDeck, destroyFlashcardsDeck } from "./FlashcardsDeck.js";
+import { renderQuizSectionHtml, mountQuizSimulator, destroyQuizSimulator } from "./QuizSimulator.js";
+import { renderBarraStudioAulaAdminHtml, inspecionarArtefatosExistentesAula } from "../services/studioApi.js";
 
 /**
  * Cria aviso visual padronizado quando uma das mídias não estiver cadastrada na aula.
@@ -57,6 +62,10 @@ export function montarConteudoInternoDaAula(disc, aula) {
   const exibirPdf = state.midiasAtivasAula.has("pdf");
   const exibirVideo = state.midiasAtivasAula.has("video");
   const exibirAudio = state.midiasAtivasAula.has("audio");
+  const exibirMindmap = state.midiasAtivasAula.has("mindmap");
+  const exibirFlashcards = state.midiasAtivasAula.has("flashcards");
+  const exibirQuiz = state.midiasAtivasAula.has("quiz");
+  const exibirRelatorio = state.midiasAtivasAula.has("relatorio");
   const exibirNotebook = state.midiasAtivasAula.has("notebook");
 
   const mds = [];
@@ -68,9 +77,16 @@ export function montarConteudoInternoDaAula(disc, aula) {
   const audios = [];
 
   arquivos.forEach(arq => {
+    // Regra Crítica Nº 1: isola estritamente os 4 novos artefatos para nunca sobrescrever Camada 1 (.md)
+    if (classificarArquivoArtefato(arq).ehNovoArtefato) {
+      return;
+    }
+
     const nomeLower = String(arq.nome || "").trim().toLowerCase();
     const mimeLower = String(arq.mimeType || "").trim().toLowerCase();
-    const ext = String(arq.tipo || (nomeLower.includes(".") ? nomeLower.split(".").pop() : "") || "").toLowerCase();
+    const extNome = nomeLower.includes(".") ? nomeLower.split(".").pop() : "";
+    const tipoBruto = String(arq.tipo || "").trim().toLowerCase();
+    const ext = (extNome || (tipoBruto !== "arquivo" && tipoBruto !== "pasta" ? tipoBruto : "") || "").toLowerCase();
 
     if (ext === "md" || ext === "markdown" || nomeLower.endsWith(".md") || arq.conteudoTexto) {
       mds.push(arq);
@@ -346,7 +362,6 @@ export function montarConteudoInternoDaAula(disc, aula) {
                         data-src="${escapeHtml(srcPdf)}"
                         class="w-full h-full border-0 bg-zinc-900"
                         allow="autoplay; fullscreen"
-                        allowfullscreen
                         loading="lazy"
                       ></iframe>
                     </div>
@@ -403,7 +418,6 @@ export function montarConteudoInternoDaAula(disc, aula) {
                         data-src="${escapeHtml(f.urlDrivePreview)}"
                         class="w-full h-full border-0"
                         allow="autoplay; fullscreen"
-                        allowfullscreen
                         loading="lazy"
                       ></iframe>
                     ` : `
@@ -494,7 +508,83 @@ export function montarConteudoInternoDaAula(disc, aula) {
         "bg-pink-500/10 border-pink-500/40 text-pink-300"
       );
 
-  // 6º PASSO: LINK NOTEBOOKLM NO FINAL DA AULA OU AVISO "FALTA LINK NOTEBOOKLLM" + DRIVE DA AULA
+  // CAMADAS 6 A 9 (NOVOS ARTEFATOS COM DEGRADAÇÃO GRACIOSA PARA VISITANTES + AVISO ADMIN QUANDO AUSENTE)
+  const novosArtefatos = resolverArtefatosAula(aula);
+
+  // 6º PASSO: MAPA MENTAL NEURAL (./mapa-mental.json) OU AVISO "FALTA MAPA MENTAL"
+  const blocoMindmapHtml = !exibirMindmap
+    ? ""
+    : novosArtefatos.mindmap.existe
+      ? renderMindmapSectionHtml(aula, novosArtefatos.mindmap)
+      : criarAvisoFaltaItemHtml(
+        "🧠",
+        "Falta Mapa Mental",
+        "Nenhum arquivo mapa-mental.json foi encontrado nesta aula.",
+        "bg-cyan-500/10 border-cyan-500/40 text-cyan-300"
+      );
+
+  // 7º PASSO: FLASHCARDS 3D + SRS (./flashcards.md) OU AVISO "FALTA FLASHCARDS"
+  const blocoFlashcardsHtml = !exibirFlashcards
+    ? ""
+    : novosArtefatos.flashcards.existe
+      ? renderFlashcardsSectionHtml(aula, novosArtefatos.flashcards)
+      : criarAvisoFaltaItemHtml(
+        "🃏",
+        "Falta Flashcards",
+        "Nenhum arquivo flashcards.md foi encontrado nesta aula.",
+        "bg-violet-500/10 border-violet-500/40 text-violet-300"
+      );
+
+  // 8º PASSO: QUIZ SIMULADOR TÁTICO (./quiz.md) OU AVISO "FALTA QUIZ"
+  const blocoQuizHtml = !exibirQuiz
+    ? ""
+    : novosArtefatos.quiz.existe
+      ? renderQuizSectionHtml(aula, novosArtefatos.quiz)
+      : criarAvisoFaltaItemHtml(
+        "🎯",
+        "Falta Quiz",
+        "Nenhum arquivo quiz.md foi encontrado nesta aula.",
+        "bg-orange-500/10 border-orange-500/40 text-orange-300"
+      );
+
+  // 9º PASSO: RELATÓRIO TÉCNICO (./relatorio.md) — CARD ESTILO NOTEBOOKLM + MODAL SIMPLES OU AVISO "FALTA RELATÓRIO"
+  const blocoRelatorioHtml = !exibirRelatorio
+    ? ""
+    : novosArtefatos.relatorio.existe
+      ? `
+        <!-- 9. RELATÓRIO TÉCNICO (./relatorio.md) — ABRE MODAL SIMPLES -->
+        <div class="p-5 rounded-2xl bg-gradient-to-r from-indigo-950/70 via-notion-bg to-violet-950/60 border border-indigo-500/40 shadow-lg space-y-2">
+          <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div class="space-y-1 min-w-0">
+              <div class="inline-flex items-center gap-1.5 text-[11px] font-mono uppercase tracking-wider text-indigo-300">
+                <span>📄 9. Relatório Técnico da Aula (./relatorio.md)</span>
+              </div>
+              <h4 class="text-sm font-bold text-white">Relatório de Inteligência Técnica e Arquitetura desta Aula</h4>
+              <p class="text-xs text-notion-muted font-mono truncate max-w-xl">./relatorio.md — Leitura complementar em modal (Executive Summary, Pilares, Trade-offs e Glossário)</p>
+            </div>
+            <div class="flex items-center gap-2 shrink-0">
+              <button
+                type="button"
+                data-action="open-relatorio-modal"
+                data-lesson-id="${escapeHtml(aula.id)}"
+                data-disc-id="${escapeHtml(disc.id)}"
+                class="px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold shadow-md transition-all shrink-0 flex items-center gap-2 cursor-pointer"
+              >
+                <span>Abrir Relatório</span>
+                <span>📄</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      `
+      : criarAvisoFaltaItemHtml(
+        "📄",
+        "Falta Relatório Técnico",
+        "Nenhum arquivo relatorio.md foi encontrado nesta aula.",
+        "bg-sky-500/10 border-sky-500/40 text-sky-300"
+      );
+
+  // 10º PASSO: LINK NOTEBOOKLM NO FINAL DA AULA OU AVISO "FALTA LINK NOTEBOOKLLM" + DRIVE DA AULA
   const linkNb = String(aula.linkNotebookLLM || "").trim();
   const linkDrive = String(aula.linkDrive || "").trim();
   const ehAdmin = isAdminAutenticado();
@@ -553,7 +643,7 @@ export function montarConteudoInternoDaAula(disc, aula) {
           <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div class="space-y-1 min-w-0">
               <div class="inline-flex items-center gap-1.5 text-[11px] font-mono uppercase tracking-wider text-indigo-300">
-                <span>🤖 6. Inteligência Artificial da Aula (NotebookLM)</span>
+                <span>🤖 10. Inteligência Artificial da Aula (NotebookLM)</span>
                 ${dupInfo.duplicado ? `<span class="px-2 py-0.2 rounded bg-amber-500/20 text-amber-300 border border-amber-500/35 text-[10px]">Compartilhado (${dupInfo.totalOcorrencias})</span>` : ""}
               </div>
               <h4 class="text-sm font-bold text-white">Caderno Interativo desta Aula no Google NotebookLM</h4>
@@ -577,7 +667,7 @@ export function montarConteudoInternoDaAula(disc, aula) {
             <div class="flex items-center gap-3 min-w-0">
               <span class="w-9 h-9 rounded-xl bg-black/30 border border-white/10 flex items-center justify-center text-lg shrink-0">🤖</span>
               <div class="min-w-0">
-                <div class="font-mono text-xs font-bold uppercase tracking-wider text-white">Falta Link NotebookLLM</div>
+                <div class="font-mono text-xs font-bold uppercase tracking-wider text-white">10. Falta Link NotebookLLM</div>
                 <div class="text-[11px] text-notion-muted truncate">Esta aula ainda não possui link do Google NotebookLM ou Google Drive cadastrado.</div>
               </div>
             </div>
@@ -592,14 +682,14 @@ export function montarConteudoInternoDaAula(disc, aula) {
         `
         : "";
 
-  // 7º PASSO: MATERIAL BRUTO UTILIZADO NA AULA (PDFs com OCR, Códigos Fonte & Textos) — RESTRITO AO MODO ADMIN (DIREITOS AUTORAIS)
+  // 11º PASSO: MATERIAL BRUTO UTILIZADO NA AULA (PDFs com OCR, Códigos Fonte & Textos) — RESTRITO AO MODO ADMIN (DIREITOS AUTORAIS)
   const blocoMaterialBrutoHtml = ehAdmin
     ? `
       <div class="p-5 rounded-2xl bg-gradient-to-r from-emerald-950/70 via-notion-bg to-teal-950/60 border border-emerald-500/40 shadow-lg space-y-2">
         <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div class="space-y-1 min-w-0">
             <div class="inline-flex items-center gap-1.5 text-[11px] font-mono uppercase tracking-wider text-emerald-400 font-bold">
-              <span>📂 7. Material Bruto Utilizado na Aula (Acesso Admin)</span>
+              <span>📂 11. Material Bruto Utilizado na Aula (Acesso Admin)</span>
             </div>
             <h4 class="text-sm font-bold text-white">PDFs com OCR, Códigos Fonte & Documentos Originais</h4>
             <p class="text-xs text-notion-muted font-mono truncate max-w-xl">
@@ -621,13 +711,22 @@ export function montarConteudoInternoDaAula(disc, aula) {
     `
     : "";
 
+  const blocoStudioAdminHtml = ehAdmin
+    ? renderBarraStudioAulaAdminHtml(disc, aula)
+    : "";
+
   const blocosVisiveis = [
+    blocoStudioAdminHtml,
     blocoMdHtml,
     blocoJpgHtml,
     blocoPngHtml,
     blocoPdfsHtml,
     blocoVideosHtml,
     blocoAudiosHtml,
+    blocoMindmapHtml,
+    blocoFlashcardsHtml,
+    blocoQuizHtml,
+    blocoRelatorioHtml,
     blocoNotebookHtml,
     blocoMaterialBrutoHtml
   ].filter(b => b && b.trim().length > 0);
@@ -661,11 +760,22 @@ export function renderBarraSelectsMidiaAula(disc) {
   if (!bar) return;
 
   const state = store.getState();
-  const contagemPorMidia = { md: 0, img: 0, pdf: 0, video: 0, audio: 0, notebook: 0 };
+  const contagemPorMidia = {
+    md: 0, img: 0, pdf: 0, video: 0, audio: 0,
+    mindmap: 0, flashcards: 0, quiz: 0, relatorio: 0,
+    notebook: 0
+  };
   if (disc && Array.isArray(disc.aulas)) {
     disc.aulas.forEach(aula => {
       if (aula.linkNotebookLLM) contagemPorMidia.notebook++;
+      const arts = resolverArtefatosAula(aula);
+      if (arts.mindmap.existe) contagemPorMidia.mindmap++;
+      if (arts.flashcards.existe) contagemPorMidia.flashcards++;
+      if (arts.quiz.existe) contagemPorMidia.quiz++;
+      if (arts.relatorio.existe) contagemPorMidia.relatorio++;
+
       (aula.arquivos || []).forEach(arq => {
+        if (classificarArquivoArtefato(arq).ehNovoArtefato) return;
         const ext = String(arq.tipo || (arq.nome || "").split(".").pop() || "").toLowerCase();
         if (ext === "md" || ext === "markdown" || arq.conteudoTexto) contagemPorMidia.md++;
         else if (["png", "jpg", "jpeg", "webp", "gif"].includes(ext)) contagemPorMidia.img++;
@@ -708,7 +818,7 @@ export function renderBarraSelectsMidiaAula(disc) {
   if (badge) {
     if (todasAtivas) {
       badge.className = "text-[11px] text-emerald-300 font-mono bg-emerald-500/10 border border-emerald-500/30 px-2 py-0.5 rounded";
-      badge.textContent = "⚡ Exibindo Todas as 6 Mídias (Clique em 1 ou mais ícones abaixo para filtrar)";
+      badge.textContent = "⚡ Exibindo Todas as Camadas (1 a 11) — Clique nos filtros para combinar";
     } else {
       const nomesAtivos = OPCOES_MIDIA_AULA
         .filter(o => state.midiasAtivasAula.has(o.id))
@@ -766,11 +876,12 @@ export function renderDisciplineLessons(disc) {
     const tituloH1 = obterTituloAula(aula, state.cacheMarkdownTexto);
     const aberta = state.aulasAbertas.has(aula.id);
     const arqs = aula.arquivos || [];
-    const qtdMd = arqs.filter(a => a.tipo === "md").length;
+    const qtdMd = arqs.filter(a => a.tipo === "md" && !classificarArquivoArtefato(a).ehNovoArtefato).length;
     const qtdImg = arqs.filter(a => ["png", "jpg", "jpeg", "webp", "gif"].includes(a.tipo)).length;
     const qtdPdfSemOcr = arqs.filter(a => a.tipo === "pdf" && (a.temOCR === false || a.statusOCR === "sem_ocr")).length;
     const qtdVideo = arqs.filter(a => ["mp4", "mov", "webm"].includes(a.tipo)).length;
     const qtdAudio = arqs.filter(a => ["m4a", "mp3", "wav", "aac"].includes(a.tipo)).length;
+    const artsResumo = resolverArtefatosAula(aula);
     const stAula = calcularStatusAula(aula);
     const ehAdmin = isAdminAutenticado();
 
@@ -812,6 +923,10 @@ export function renderDisciplineLessons(disc) {
               ${qtdPdfSemOcr ? `<span class="px-2 py-0.5 rounded bg-rose-500/10 text-rose-300 border border-rose-500/25 font-mono text-[10px] shrink-0">📄 ${qtdPdfSemOcr} PDF Sem OCR</span>` : ""}
               ${qtdVideo ? `<span class="px-2 py-0.5 rounded bg-purple-500/10 text-purple-300 border border-purple-500/25 font-mono text-[10px] shrink-0">🎬 ${qtdVideo}</span>` : ""}
               ${qtdAudio ? `<span class="px-2 py-0.5 rounded bg-pink-500/10 text-pink-300 border border-pink-500/25 font-mono text-[10px] shrink-0">🎧 ${qtdAudio}</span>` : ""}
+              ${artsResumo.mindmap.existe ? `<span class="px-2 py-0.5 rounded bg-cyan-500/10 text-cyan-300 border border-cyan-500/25 font-mono text-[10px] shrink-0">🧠 Mapa</span>` : ""}
+              ${artsResumo.flashcards.existe ? `<span class="px-2 py-0.5 rounded bg-violet-500/10 text-violet-300 border border-violet-500/25 font-mono text-[10px] shrink-0">🃏 Cards</span>` : ""}
+              ${artsResumo.quiz.existe ? `<span class="px-2 py-0.5 rounded bg-orange-500/10 text-orange-300 border border-orange-500/25 font-mono text-[10px] shrink-0">🎯 Quiz</span>` : ""}
+              ${artsResumo.relatorio.existe ? `<span class="px-2 py-0.5 rounded bg-sky-500/10 text-sky-300 border border-sky-500/25 font-mono text-[10px] shrink-0">📄 Relatório</span>` : ""}
               ${aula.linkNotebookLLM
                 ? (() => {
                     const dupInfo = verificarLinkNotebookDuplicado(aula.linkNotebookLLM, disc.id, aula.id, state.db);
@@ -839,6 +954,12 @@ export function renderDisciplineLessons(disc) {
                   </a>`
                 : ""
               }
+              ${ehAdmin && !inspecionarArtefatosExistentesAula(aula).possuiAlgumArtefato
+                ? `<button type="button" onclick="event.stopPropagation(); window.StudyOS?.dispararTodosArtefatosDaAula('${disc.id}', '${aula.id}', false, this)" title="Esta aula não possui nenhum artefato cadastrado — Gerar todos os 8 artefatos de uma vez" class="px-2.5 py-0.5 rounded-md bg-amber-500/25 hover:bg-amber-500 text-amber-200 hover:text-black border border-amber-400/50 font-mono font-bold text-[10px] shrink-0 transition-all flex items-center gap-1 cursor-pointer">
+                    <span>⚡ Gerar Todos da Aula</span>
+                  </button>`
+                : ""
+              }
             </div>
 
             <!-- Linha 2: Título com Largura Total -->
@@ -857,6 +978,71 @@ export function renderDisciplineLessons(disc) {
       </details>
     `;
   }).join("");
+
+  // Hidrata quaisquer aulas já abertas na renderização inicial
+  aulas.forEach(aula => {
+    if (state.aulasAbertas.has(aula.id)) {
+      const bodyEl = document.getElementById(`lesson-body-${aula.id}`);
+      if (bodyEl) {
+        observarMidiasLazy(bodyEl);
+        hidratarArtefatosAula(bodyEl, aula, disc);
+      }
+    }
+  });
+}
+
+/**
+ * Hidrata os componentes interativos das Camadas 6, 7 e 8 dentro do container de uma aula aberta,
+ * baixando sob demanda `/db_conteudo/{aulaId}.json` se os textos/JSONs ainda não estiverem em memória.
+ * @param {HTMLElement} containerEl
+ * @param {object} aula
+ * @param {object | null} [disc=null]
+ */
+export async function hidratarArtefatosAula(containerEl, aula, disc = null) {
+  if (typeof document === "undefined" || !containerEl || !aula) return;
+
+  const state = store.getState();
+  const hidratou = await hidratarConteudoAulaSobDemanda(aula);
+  if (hidratou && disc && state.aulasAbertas.has(aula.id)) {
+    desmontarArtefatosAula(aula.id);
+    revogarBlobsDaAula(aula.id);
+    containerEl.innerHTML = montarConteudoInternoDaAula(disc, aula);
+    observarMidiasLazy(containerEl);
+  }
+
+  const arts = resolverArtefatosAula(aula);
+
+  if (arts.mindmap.existe && containerEl.querySelector(`[data-mindmap-root="${aula.id}"]`)) {
+    const json = arts.mindmap.dataJson || await carregarConteudoArtefato(arts.mindmap, aula.id, "json");
+    if (json) {
+      mountNeuralMindmap(containerEl, aula, json);
+    }
+  }
+
+  if (arts.flashcards.existe && containerEl.querySelector(`[data-flashcards-root="${aula.id}"]`)) {
+    const md = arts.flashcards.markdown || await carregarConteudoArtefato(arts.flashcards, aula.id, "text");
+    if (md) {
+      mountFlashcardsDeck(containerEl, aula, md);
+    }
+  }
+
+  if (arts.quiz.existe && containerEl.querySelector(`[data-quiz-root="${aula.id}"]`)) {
+    const md = arts.quiz.markdown || await carregarConteudoArtefato(arts.quiz, aula.id, "text");
+    if (md) {
+      mountQuizSimulator(containerEl, aula, md);
+    }
+  }
+}
+
+/**
+ * Desmonta instâncias interativas (loops canvas, listeners) ao fechar a aula.
+ * @param {string} aulaId
+ */
+export function desmontarArtefatosAula(aulaId) {
+  if (!aulaId) return;
+  destroyNeuralMindmap(aulaId);
+  destroyFlashcardsDeck(aulaId);
+  destroyQuizSimulator(aulaId);
 }
 
 /**
@@ -879,11 +1065,13 @@ export function aoAlternarToggleAula(detailsEl, disc, aulaId) {
       bodyEl.innerHTML = montarConteudoInternoDaAula(disc, aula);
     }
     observarMidiasLazy(bodyEl);
+    hidratarArtefatosAula(bodyEl, aula, disc);
     if (tabBtn) {
       tabBtn.className = "px-3 py-1.5 rounded-lg text-xs font-mono whitespace-nowrap transition-all border bg-indigo-600 text-white border-indigo-400 shadow-xs cursor-pointer";
     }
   } else {
     state.aulasAbertas.delete(aulaId);
+    desmontarArtefatosAula(aulaId);
     bodyEl.innerHTML = "";
     revogarBlobsDaAula(aulaId);
     if (tabBtn) {

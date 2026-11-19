@@ -128,6 +128,13 @@
             background: linear-gradient(135deg, rgba(99, 102, 241, 0.4), rgba(168, 85, 247, 0.2), rgba(236, 72, 153, 0.1));
         }
 
+        .gradient-text {
+            background: linear-gradient(90deg, #818cf8, #c084fc, #34d399);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+
         .code-scroll::-webkit-scrollbar {
             height: 6px;
         }
@@ -182,6 +189,26 @@
             color: #0E7490 !important;
         }
 
+        html:not(.dark) :not(.keep-dark-theme)>.text-teal-300 {
+            color: #0F766E !important;
+        }
+
+        html:not(.dark) :not(.keep-dark-theme)>.text-pink-300 {
+            color: #BE185D !important;
+        }
+
+        html:not(.dark) :not(.keep-dark-theme)>.text-violet-300 {
+            color: #6D28D9 !important;
+        }
+
+        html:not(.dark) :not(.keep-dark-theme)>.text-orange-300 {
+            color: #C2410C !important;
+        }
+
+        html:not(.dark) :not(.keep-dark-theme)>.text-sky-300 {
+            color: #0369A1 !important;
+        }
+
         html:not(.dark) :not(.keep-dark-theme)>.text-zinc-300,
         html:not(.dark) :not(.keep-dark-theme)>.text-zinc-400 {
             color: #334155 !important;
@@ -224,7 +251,7 @@
                     Livros</a>
                 <a href="#notebooklm"
                     class="px-2.5 py-1.5 rounded-lg hover:text-white hover:bg-notion-hover transition-colors">NotebookLM
-                    &amp; 7 Camadas</a>
+                    &amp; 11 Camadas</a>
                 <a href="#arquitetura"
                     class="px-2.5 py-1.5 rounded-lg hover:text-white hover:bg-notion-hover transition-colors">Pipeline</a>
                 <a href="#motores-python"
@@ -302,14 +329,14 @@
                     class="px-2.5 py-1 rounded-lg bg-zinc-900 border border-zinc-800 text-[11px] font-mono text-zinc-300">Notion
                     Content Tutor (15 Blocos)</span>
                 <span
-                    class="px-2.5 py-1 rounded-lg bg-zinc-900 border border-zinc-800 text-[11px] font-mono text-zinc-300">4
-                    Motores Python &amp; Detector OCR</span>
+                    class="px-2.5 py-1 rounded-lg bg-zinc-900 border border-zinc-800 text-[11px] font-mono text-zinc-300">5
+                    Motores Python &amp; Studio Worker</span>
                 <span
                     class="px-2.5 py-1 rounded-lg bg-zinc-900 border border-zinc-800 text-[11px] font-mono text-zinc-300">Notion
                     API &amp; Synced Blocks</span>
                 <span
                     class="px-2.5 py-1 rounded-lg bg-zinc-900 border border-zinc-800 text-[11px] font-mono text-zinc-300">Firebase
-                    Realtime DB &amp; Fila REST</span>
+                    RTDB (/db_meta + /db_conteudo)</span>
                 <span
                     class="px-2.5 py-1 rounded-lg bg-zinc-900 border border-zinc-800 text-[11px] font-mono text-zinc-300">ES6
                     Code Splitting &amp; Cache LRU</span>
@@ -318,7 +345,7 @@
                     &amp; Lupa 2.2x 360°</span>
                 <span
                     class="px-2.5 py-1 rounded-lg bg-zinc-900 border border-zinc-800 text-[11px] font-mono text-zinc-300">Segurança
-                    SHA-256 &amp; 47 Testes</span>
+                    SHA-256 &amp; 71 Testes</span>
             </div>
         </section>
 
@@ -1170,7 +1197,7 @@ Provide a deep, step-by-step pedagogical explanation:
                     <h3 class="text-sm font-bold text-white">Planejamento para a Compreensão (Understanding by Design)
                     </h3>
                     <p class="text-xs text-notion-muted leading-relaxed">
-                        O método de *Backwards Design*: definir os resultados essenciais e as grandes ideias antes de
+                        O método de <em>Backwards Design</em>: definir os resultados essenciais e as grandes ideias antes de
                         selecionar o material didático.
                     </p>
                 </div>
@@ -1243,7 +1270,7 @@ Provide a deep, step-by-step pedagogical explanation:
                     <h3 class="text-sm font-bold text-white">Fixe o Conhecimento: A Ciência da Aprendizagem Bem-Sucedida
                     </h3>
                     <p class="text-xs text-notion-muted leading-relaxed">
-                        A eficácia comprovada da recuperação ativa (*active recall*), repetição espaçada e intercalação
+                        A eficácia comprovada da recuperação ativa (<em>active recall</em>), repetição espaçada e intercalação
                         contra a ilusão de fluência passiva.
                     </p>
                 </div>
@@ -1257,7 +1284,7 @@ Provide a deep, step-by-step pedagogical explanation:
                     class="w-8 h-8 rounded-lg bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 flex items-center justify-center text-sm font-bold">
                     05
                 </div>
-                <h2 class="text-2xl font-bold text-white">O Salto Quântico: A Era NotebookLM & Os 4 Artefatos Sagrados
+                <h2 class="text-2xl font-bold text-white">O Salto Quântico: A Era NotebookLM &amp; Os 8 Artefatos Sagrados
                 </h2>
             </div>
 
@@ -1266,7 +1293,7 @@ Provide a deep, step-by-step pedagogical explanation:
                     Quando a ferramenta do <strong class="text-emerald-400">NotebookLM</strong> foi lançada, percebi que
                     a barreira havia sido rompida: <em>"Eu não precisava me limitar a textos estáticos. Agora podia
                         alimentar a IA com o material bruto completo de cada aula (capítulos de livros, PDFs do
-                        professor, áudios originais e transcrições Whisper) e gerar um ecossistema multimodal."</em>
+                        professor, áudios originais e transcrições Whisper) e gerar um ecossistema multimodal e interativo — hoje automatizado em lote pelo <strong class="text-indigo-300">Studio Worker</strong>."</em>
                 </p>
 
                 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -1328,16 +1355,76 @@ Provide a deep, step-by-step pedagogical explanation:
                             gamer.
                         </p>
                     </div>
+
+                    <!-- Artefato 5: Mapa Mental Neural -->
+                    <div
+                        class="p-5 rounded-2xl bg-black/40 border border-cyan-500/30 hover:border-cyan-500/60 transition-colors space-y-2.5">
+                        <div
+                            class="w-11 h-11 rounded-xl bg-cyan-500/20 text-cyan-300 text-2xl flex items-center justify-center font-bold">
+                            🧠
+                        </div>
+                        <h4 class="text-sm font-bold text-white">Mapa Mental Neural</h4>
+                        <p class="text-xs text-notion-muted leading-relaxed">
+                            Árvore conceitual exportada em <code class="font-mono text-cyan-300">.json</code> e
+                            renderizada em grafo vivo no <code class="font-mono">&lt;canvas&gt;</code> estilo Obsidian,
+                            com física force-directed, partículas luminosas e 3 modos de gravidade.
+                        </p>
+                    </div>
+
+                    <!-- Artefato 6: Flashcards 3D + SRS -->
+                    <div
+                        class="p-5 rounded-2xl bg-black/40 border border-violet-500/30 hover:border-violet-500/60 transition-colors space-y-2.5">
+                        <div
+                            class="w-11 h-11 rounded-xl bg-violet-500/20 text-violet-300 text-2xl flex items-center justify-center font-bold">
+                            🃏
+                        </div>
+                        <h4 class="text-sm font-bold text-white">Flashcards 3D + SRS</h4>
+                        <p class="text-xs text-notion-muted leading-relaxed">
+                            Baralhos de <em>Active Recall</em> em <code class="font-mono text-violet-300">flashcards.md</code>
+                            com palco 3D Flip, avaliação SRS (Errei / Difícil / Fácil) salva por aula, modo Grade
+                            Completa e atalhos de teclado.
+                        </p>
+                    </div>
+
+                    <!-- Artefato 7: Quiz Simulador Tático -->
+                    <div
+                        class="p-5 rounded-2xl bg-black/40 border border-orange-500/30 hover:border-orange-500/60 transition-colors space-y-2.5">
+                        <div
+                            class="w-11 h-11 rounded-xl bg-orange-500/20 text-orange-300 text-2xl flex items-center justify-center font-bold">
+                            🎯
+                        </div>
+                        <h4 class="text-sm font-bold text-white">Quiz Simulador Tático</h4>
+                        <p class="text-xs text-notion-muted leading-relaxed">
+                            Simulados técnicos estilo certificação/entrevista em <code class="font-mono text-orange-300">quiz.md</code>
+                            com navegação por pílulas, feedback imediato (✔/✖), Dica Tática expansível e placar
+                            persistente por aula.
+                        </p>
+                    </div>
+
+                    <!-- Artefato 8: Relatório Técnico -->
+                    <div
+                        class="p-5 rounded-2xl bg-black/40 border border-sky-500/30 hover:border-sky-500/60 transition-colors space-y-2.5">
+                        <div
+                            class="w-11 h-11 rounded-xl bg-sky-500/20 text-sky-300 text-2xl flex items-center justify-center font-bold">
+                            📋
+                        </div>
+                        <h4 class="text-sm font-bold text-white">Relatório Técnico</h4>
+                        <p class="text-xs text-notion-muted leading-relaxed">
+                            Dossiê de inteligência arquitetural em <code class="font-mono text-sky-300">relatorio.md</code>
+                            com <em>Executive Summary</em>, análise de pilares, trade-offs, anti-patterns e glossário
+                            aberto sob demanda em modal limpo.
+                        </p>
+                    </div>
                 </div>
 
-                <!-- AS 7 CAMADAS MULTIMÍDIA DA AULA & A REGRA DO FILTRO OCR -->
+                <!-- AS 11 CAMADAS MULTIMÍDIA DA AULA & A REGRA DO FILTRO OCR -->
                 <div class="p-5 sm:p-6 rounded-2xl bg-black/40 border border-emerald-500/25 space-y-4">
                     <div
                         class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-white/10 pb-3">
                         <div>
                             <h3 class="text-base font-bold text-white flex items-center gap-2">
                                 <span>🧩</span>
-                                <span>Da Geração à Interface: As 7 Camadas Multimídia &amp; O Filtro Inteligente de
+                                <span>Da Geração à Interface: As 11 Camadas Multimídia &amp; O Filtro Inteligente de
                                     OCR</span>
                             </h3>
                             <p class="text-xs text-notion-muted mt-0.5">
@@ -1347,7 +1434,7 @@ Provide a deep, step-by-step pedagogical explanation:
                         </div>
                         <span
                             class="px-2.5 py-1 rounded-lg bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 font-mono text-[11px] self-start sm:self-auto">
-                            7 Camadas Combináveis
+                            11 Camadas Combináveis
                         </span>
                     </div>
 
@@ -1394,13 +1481,42 @@ Provide a deep, step-by-step pedagogical explanation:
                             <p class="text-[11px] text-notion-muted leading-relaxed">Player de áudio nativo com fallback
                                 automático para o <em>Google Drive Preview Player</em> e opção de download direto.</p>
                         </div>
+
+                        <div class="p-3.5 rounded-xl bg-notion-card border border-cyan-500/30 space-y-1">
+                            <div class="font-mono font-bold text-cyan-300">6º 🧠 Mapa Mental Neural (.JSON)</div>
+                            <p class="text-[11px] text-notion-muted leading-relaxed">Grafo vivo em <code
+                                    class="font-mono">&lt;canvas&gt;</code> estilo Obsidian com física de molas,
+                                partículas sinápticas, 3 modos de gravidade, Spotlight no hover, centralização de câmera e
+                                expansão/recolhimento global nível a nível.</p>
+                        </div>
+
+                        <div class="p-3.5 rounded-xl bg-notion-card border border-violet-500/30 space-y-1">
+                            <div class="font-mono font-bold text-violet-300">7º 🃏 Flashcards 3D + SRS (.MD)</div>
+                            <p class="text-[11px] text-notion-muted leading-relaxed">Palco 3D Flip interativo com
+                                repetição espaçada (SRS) persistida por aula, Shuffle, Grade Completa e atalhos de
+                                teclado.</p>
+                        </div>
+
+                        <div class="p-3.5 rounded-xl bg-notion-card border border-orange-500/30 space-y-1">
+                            <div class="font-mono font-bold text-orange-300">8º 🎯 Quiz Simulador Tático (.MD)</div>
+                            <p class="text-[11px] text-notion-muted leading-relaxed">Questões com pílulas Q01..Q0N,
+                                feedback imediato (✔/✖), Dica Tática expansível, Modo Foco vs. Lista e placar
+                                persistente.</p>
+                        </div>
+
+                        <div class="p-3.5 rounded-xl bg-notion-card border border-sky-500/30 space-y-1">
+                            <div class="font-mono font-bold text-sky-300">9º 📄 Relatório Técnico (.MD)</div>
+                            <p class="text-[11px] text-notion-muted leading-relaxed">Card compacto estilo NotebookLM que
+                                abre em modal limpo (<code class="font-mono">RelatorioModal.js</code>) com Executive
+                                Summary, pilares e glossário.</p>
+                        </div>
                     </div>
 
                     <div
                         class="p-4 rounded-xl bg-indigo-500/10 border border-indigo-500/30 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs">
                         <div class="space-y-1">
                             <div class="font-mono font-bold text-indigo-300 flex items-center gap-1.5">
-                                <span>🤖 6º Caderno NotebookLM + 📂 7º Material Bruto (Bloco 15 — PDFs Com OCR &amp;
+                                <span>🤖 10º Caderno NotebookLM + 📂 11º Material Bruto (Bloco 15 — PDFs Com OCR &amp;
                                     Códigos)</span>
                             </div>
                             <p class="text-[11px] text-notion-muted leading-relaxed">
@@ -1418,17 +1534,16 @@ Provide a deep, step-by-step pedagogical explanation:
                     </div>
                 </div>
 
-                <!-- OS 4 PROMPTS MESTRES DOS ARTEFATOS MULTIMODAIS (ARQUITETURA COMPLETA) -->
+                <!-- OS 7 PROMPTS MESTRES DOS ARTEFATOS (prompts.json — ARQUITETURA COMPLETA) -->
                 <div id="biblioteca-prompts-artefatos" class="space-y-3 pt-2 scroll-mt-24">
                     <div class="flex items-center justify-between flex-wrap gap-2">
                         <h3 class="text-base font-bold text-white flex items-center gap-2">
                             <span>🎛️</span>
-                            <span>Biblioteca de Prompts Mestres dos 4 Artefatos Multimodais (Especificação
-                                Completa)</span>
+                            <span>Biblioteca de Prompts Mestres dos Artefatos (<code class="font-mono text-emerald-300 text-xs">prompts.json</code> — Especificação Completa)</span>
                         </h3>
                         <span
                             class="text-[11px] font-mono px-2.5 py-0.5 rounded bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">
-                            4 Prompts Mestres &bull; Clique para Expandir e Copiar
+                            7 Prompts Mestres &bull; Clique para Expandir e Copiar
                         </span>
                     </div>
 
@@ -1691,7 +1806,171 @@ Convert static text into a dynamic visual learning experience. Create a shot-by-
 | **3: The Connection (1:30-2:30)** | **(Concept B)** "Mas cuidado. Isso se conecta com: [Concept B]." Explain the relationship. | **FLOWCHART:** Animated neon lines connecting Icon A to Icon B. Background has a subtle scrolling grid effect. |
 | **4: The Application** | **(Real World)** "No mundo real, empresas usam isso para..." Give a concrete example. | **ISOMETRIC VIEW:** A 3D stylized server rack or office layout. Data packets flowing between nodes (Matrix style but clean). |
 | **... (Extra Scenes)** | **(Continue logic flow)** | **(Maintain Dark Blue/Neon aesthetic)** |
-| **Final: The Synthesis** | **(Recap &amp; CTA)** "Resumo da ópera: [Key Takeaway]." End with a reflective question. | **DASHBOARD VIEW:** A summary card appearing like a Game Stat screen (Mission Complete). Final Question in bold Monospace font. |</pre>
+| **Final: The Synthesis** | **(Recap &amp; CTA)** "Resumo da ópera: [Key Takeaway]." End with a reflective question. | **DASHBOARD VIEW:** A summary card appearing like a Game Stat screen (Mission Complete). Final Question in bold Monospace font. |
+
+**Prompt Visual Complementar (Video Style — High-End Tech Blueprint &amp; Gamer HUD Edition):**
+Cinematic 3D Tech Blueprint, Dark Mode UI &amp; High-End Gaming Aesthetics. Atmosphere: Software War Room meets Cyberpunk Esports Arena with Volumetric Lighting, Midnight Obsidian (#050A14) and Deep Navy palette accented by Neon Cyan (#00F0FF), Electric Purple, and RGB Gamer Lighting. Animated isometric PCB grid overlays, ABSOLUTELY NO WHITE BACKGROUNDS, Health Bars (HP) for System Stability, XP Progress Bars for timelines, Inventory Slots for resources, high-fidelity 3D renders mixed with 8-bit Pixel Art icons and Glassmorphism panels.</pre>
+                        </div>
+                    </details>
+
+                    <!-- Prompt 5: Flashcards 3D + SRS -->
+                    <details
+                        class="group rounded-2xl bg-black/60 border border-violet-500/35 overflow-hidden transition-all keep-dark-theme">
+                        <summary
+                            class="px-4 py-3.5 cursor-pointer flex items-center justify-between gap-3 bg-gradient-to-r from-violet-950/50 via-black to-black hover:from-violet-900/40 transition-all select-none">
+                            <div class="flex items-center gap-3">
+                                <span
+                                    class="w-8 h-8 rounded-lg bg-violet-500/20 border border-violet-500/40 text-violet-300 flex items-center justify-center text-sm font-bold shrink-0">🃏</span>
+                                <div>
+                                    <span class="text-xs sm:text-sm font-bold text-white">5. Prompt Mestre — Flashcards
+                                        3D + SRS (Gamer Mindset Edition)</span>
+                                    <p class="text-[11px] text-zinc-400">Persona "Chill Gamer Professor" (Learning
+                                        Scientist), foco em Active Recall, comparações, causa/efeito e cenários limpos em
+                                        PT-BR.</p>
+                                </div>
+                            </div>
+                            <span
+                                class="text-[11px] font-mono text-violet-300 px-2.5 py-1 rounded bg-violet-500/10 border border-violet-500/30 shrink-0">Ver
+                                Prompt ▾</span>
+                        </summary>
+                        <div class="p-4 border-t border-white/10 space-y-2.5 bg-[#0c0c10] keep-dark-theme">
+                            <div class="flex items-center justify-between gap-2">
+                                <span class="text-[11px] font-mono text-violet-300">🃏 Formato Alvo: Baralho Active Recall
+                                    (flashcards.md — Camada 7)</span>
+                                <button type="button" onclick="copiarTextoPrompt(this, 'prompt-artifact-flashcards')"
+                                    class="px-3 py-1 rounded-lg bg-violet-600 hover:bg-violet-500 text-white text-xs font-mono font-semibold cursor-pointer">📋
+                                    Copiar Prompt</button>
+                            </div>
+                            <pre id="prompt-artifact-flashcards"
+                                class="p-3.5 rounded-xl bg-black/90 border border-white/10 text-[11px] font-mono text-zinc-200 overflow-x-auto leading-relaxed whitespace-pre-wrap select-all code-scroll">**Task: Final Review Deck Generation (Gamer Mindset Edition)**
+
+**Scope of Analysis: [FULL REVIEW]**
+* **Holistic Mode:**
+  1. **Total Integration:** Map all themes from **all provided lessons** to find the most critical concepts ("Boss-Level" knowledge).
+  2. **Focus on Connections (Combos):** Prioritize cards that force comparison and connection between different lesson themes.
+  3. **Narrative Arc:** The deck must cover the entire subject, functioning as a complete "Skill Tree" review.
+
+**Persona: The "Chill Gamer Professor" (Learning Scientist Mindset)**
+You are a Senior Tech Mentor applying learning science, but with a gamer/pop culture lens.
+* **Mindset:** Learning is "grinding" XP. A difficult exam is a "Boss Fight". You are creating the ultimate "Grind Deck" for "Active Recall" to help the student "Level Up".
+* **Tone:** Relaxed, "Anti-Bureaucracy" (Papo Reto). You hate filler. You identify the *signal* (what's on the test) from the *noise* (extra fluff).
+* **Empathy:** You know "grinding" flashcards can be boring, so you prioritize questions that *connect* ideas, not just isolated facts.
+
+**Language &amp; Vocabulary Rules (For Output):**
+1. **Technical Terms:** TRANSLATE standard CS terms to Portuguese whenever possible (e.g., use "Implantação" instead of "Deploy", "Defeito" instead of "Bug"), unless the English term is the industry standard in Brazil.
+2. **Output Language:** The `FRENTE` and `VERSO` text must be in professional Brazilian Portuguese (PT-BR).
+3. **Gamer Slang:** Do NOT use gamer slang *in the output cards*. Keep the cards clean and professional.
+
+**Mission:**
+Engineer an active learning system for the final "Boss Fight" (the exam). Dissect **all available source material** to extract the most valuable info-pairs and format them as diverse flashcards. The goal is to promote long-term retention.
+
+**Execution Protocol:**
+1. **Loot Analysis:** Systematically scan **all lessons**, looking for patterns for each card type (Definition, Cause/Effect, Comparison, Scenario).
+2. **Deck Generation:** Format the extracted pairs using the template below. Create a balanced and comprehensive deck, prioritizing "Comparison" and "Scenario" cards that require integrated knowledge.</pre>
+                        </div>
+                    </details>
+
+                    <!-- Prompt 6: Quiz Simulador Tático -->
+                    <details
+                        class="group rounded-2xl bg-black/60 border border-orange-500/35 overflow-hidden transition-all keep-dark-theme">
+                        <summary
+                            class="px-4 py-3.5 cursor-pointer flex items-center justify-between gap-3 bg-gradient-to-r from-orange-950/50 via-black to-black hover:from-orange-900/40 transition-all select-none">
+                            <div class="flex items-center gap-3">
+                                <span
+                                    class="w-8 h-8 rounded-lg bg-orange-500/20 border border-orange-500/40 text-orange-300 flex items-center justify-center text-sm font-bold shrink-0">🎯</span>
+                                <div>
+                                    <span class="text-xs sm:text-sm font-bold text-white">6. Prompt Mestre — Quiz
+                                        Simulador Tático (Certification/Interview Mode)</span>
+                                    <p class="text-[11px] text-zinc-400">Persona "Senior Engineering Manager / Lead
+                                        Interviewer", Taxonomia de Bloom (Nível 1 a 3), First Principles e análise de
+                                        trade-offs.</p>
+                                </div>
+                            </div>
+                            <span
+                                class="text-[11px] font-mono text-orange-300 px-2.5 py-1 rounded bg-orange-500/10 border border-orange-500/30 shrink-0">Ver
+                                Prompt ▾</span>
+                        </summary>
+                        <div class="p-4 border-t border-white/10 space-y-2.5 bg-[#0c0c10] keep-dark-theme">
+                            <div class="flex items-center justify-between gap-2">
+                                <span class="text-[11px] font-mono text-orange-300">🎯 Formato Alvo: Simulado Tático
+                                    (quiz.md — Camada 8)</span>
+                                <button type="button" onclick="copiarTextoPrompt(this, 'prompt-artifact-quiz')"
+                                    class="px-3 py-1 rounded-lg bg-orange-600 hover:bg-orange-500 text-white text-xs font-mono font-semibold cursor-pointer">📋
+                                    Copiar Prompt</button>
+                            </div>
+                            <pre id="prompt-artifact-quiz"
+                                class="p-3.5 rounded-xl bg-black/90 border border-white/10 text-[11px] font-mono text-zinc-200 overflow-x-auto leading-relaxed whitespace-pre-wrap select-all code-scroll">**Task: Comprehensive Technical Assessment Generation (Certification/Interview Mode)**
+
+**Scope of Analysis:** [ALL COVERED THEMES]
+* **Holistic Integration:** Do not analyze files or lessons in isolation. Treat all provided materials as a single "Knowledge Base."
+* **Thematic Mapping:** Identify the "Golden Thread" that connects disparate topics (e.g., How a concept from the first document justifies a decision in the last document).
+* **Narrative Assessment:** The exam must tell a story. It should test if the student understands the *evolution* of the technology/methodology, not just isolated facts.
+
+**Persona: The "Senior Engineering Manager / Lead Interviewer"**
+You are vetting a candidate for a critical role. You despise "trivia questions" that can be easily Googled. You value **First Principles**, **Critical Thinking**, and **Trade-off Analysis**.
+* **Tone:** Rigorous, Professional, Fair, and Challenging.
+* **Objective:** To differentiate between someone who *memorized* the definitions and someone who *understands* the architecture.
+
+**Mission:**
+Engineer a robust assessment that measures the depth of knowledge across **ALL themes**. Design questions that progress in cognitive complexity (Bloom's Taxonomy), moving from basic recall to complex architectural synthesis.
+
+**Execution Protocol:**
+1. **Knowledge Graph:** Map all facts, concepts, processes, and principles found in the source text.
+2. **Question Design:**
+   * *Level 1 (Junior):* Basic definitions and syntax.
+   * *Level 2 (Mid-Level):* Scenario application and debugging logic.
+   * *Level 3 (Senior):* System design, trade-offs, and judging between two valid options.
+3. **Output:** Generate the exam in Brazilian Portuguese with commented Mentor Notes explaining the reasoning behind each answer.</pre>
+                        </div>
+                    </details>
+
+                    <!-- Prompt 7: Relatório de Inteligência Técnica -->
+                    <details
+                        class="group rounded-2xl bg-black/60 border border-sky-500/35 overflow-hidden transition-all keep-dark-theme">
+                        <summary
+                            class="px-4 py-3.5 cursor-pointer flex items-center justify-between gap-3 bg-gradient-to-r from-sky-950/50 via-black to-black hover:from-sky-900/40 transition-all select-none">
+                            <div class="flex items-center gap-3">
+                                <span
+                                    class="w-8 h-8 rounded-lg bg-sky-500/20 border border-sky-500/40 text-sky-300 flex items-center justify-center text-sm font-bold shrink-0">📋</span>
+                                <div>
+                                    <span class="text-xs sm:text-sm font-bold text-white">7. Prompt Mestre — Relatório
+                                        de Inteligência Técnica (Senior Architect Edition)</span>
+                                    <p class="text-[11px] text-zinc-400">Persona "Senior Technical Architect / CTO",
+                                        Executive Summary, Análise dos Pilares, Risk Assessment (Anti-Patterns &amp;
+                                        Trade-offs) e Glossário.</p>
+                                </div>
+                            </div>
+                            <span
+                                class="text-[11px] font-mono text-sky-300 px-2.5 py-1 rounded bg-sky-500/10 border border-sky-500/30 shrink-0">Ver
+                                Prompt ▾</span>
+                        </summary>
+                        <div class="p-4 border-t border-white/10 space-y-2.5 bg-[#0c0c10] keep-dark-theme">
+                            <div class="flex items-center justify-between gap-2">
+                                <span class="text-[11px] font-mono text-sky-300">📄 Formato Alvo: Relatório Técnico
+                                    (relatorio.md — Camada 9)</span>
+                                <button type="button" onclick="copiarTextoPrompt(this, 'prompt-artifact-reports')"
+                                    class="px-3 py-1 rounded-lg bg-sky-600 hover:bg-sky-500 text-white text-xs font-mono font-semibold cursor-pointer">📋
+                                    Copiar Prompt</button>
+                            </div>
+                            <pre id="prompt-artifact-reports"
+                                class="p-3.5 rounded-xl bg-black/90 border border-white/10 text-[11px] font-mono text-zinc-200 overflow-x-auto leading-relaxed whitespace-pre-wrap select-all code-scroll">**Task: Technical Intelligence Report Generation (Senior Architect Edition)**
+
+**Scope of Analysis:** [FOR FOCUS, INSERT LESSON NUMBER ( )]
+* **Lesson Focus (Granular Mode):** Isolate content strictly from that lesson, perform Root Cause Analysis and produce a standalone deep-dive.
+* **General Synthesis (Holistic Mode):** Map themes across all lessons to find the architectural backbone, recurring trade-offs, anti-patterns, and best practices.
+
+**Persona: The "Senior Technical Architect/CTO"**
+You are a high-level consultant evaluating technology strategy. You prioritize **scalability**, **maintainability**, and **risk mitigation**.
+* **Tone:** Professional, Objective, Evidence-Based, and "No-Nonsense". You speak the language of Engineering Leadership.
+* **Mindset:** You don't just summarize; you *evaluate*. You look for "Trade-offs" (what do we gain vs. what do we lose?).
+* **Language Rule:** Use standard English technical terms (e.g., *Trade-off, Overhead, Bottleneck, Deploy*) in professional Brazilian Portuguese.
+
+**Output Template (Tech Intelligence Report):**
+1. **Executive Summary (O "Elevator Pitch")** — max 250 words: core thesis, main benefit, main risk/trade-off.
+2. **Architectural Breakdown (Análise dos Pilares)** — Mecânica, Evidência e Análise Crítica de cada pilar.
+3. **Strategic Implications (O Impacto no Negócio)** — Operacional (Chão de Fábrica) e Estratégico (Long Game).
+4. **Risk Assessment (Pontos de Atenção)** — Anti-Patterns, Trade-offs e Blind Spots diretamente relevantes.
+5. **Technical Glossary (Definições de Precisão)** — 5 a 7 termos técnicos com definições precisas de engenharia.</pre>
                         </div>
                     </details>
                 </div>
@@ -1731,8 +2010,9 @@ Convert static text into a dynamic visual learning experience. Create a shot-by-
                         </h3>
                         <p class="text-xs text-notion-muted mt-1 leading-relaxed">
                             O fluxo de ponta a ponta que conecta a sala de aula presencial, processamento de linguagem
-                            natural com LLMs, armazenamento físico no Google Drive, 4 motores Python, Firebase Realtime
-                            Database e replicação de <em>Synced Blocks</em> no Notion.
+                            natural com LLMs, armazenamento físico no Google Drive, 5 motores Python (incluindo o
+                            <code class="font-mono text-indigo-300">studio_worker.py</code>), Firebase Realtime
+                            Database otimizado e replicação de <em>Synced Blocks</em> no Notion.
                         </p>
                     </div>
 
@@ -1772,7 +2052,7 @@ Convert static text into a dynamic visual learning experience. Create a shot-by-
                                     <li>• Áudio (.aac/.m4a)</li>
                                     <li>• NotebookLM (Whisper)</li>
                                     <li>• Google Gems (.md 15b)</li>
-                                    <li>• 4 Artefatos Multimídia</li>
+                                    <li>• 8 Artefatos (Mídia+Inter.)</li>
                                 </ul>
                                 <div
                                     class="text-[10px] font-mono text-indigo-300 pt-1 border-t border-white/10 flex items-center justify-between">
@@ -1810,19 +2090,19 @@ Convert static text into a dynamic visual learning experience. Create a shot-by-
                                 <div class="flex items-center justify-between">
                                     <span
                                         class="px-2 py-0.5 rounded bg-purple-500/20 text-purple-300 font-mono text-[10px] font-bold">3.
-                                        4 MOTORES PYTHON</span>
+                                        5 MOTORES PYTHON</span>
                                     <span class="text-base">🐍</span>
                                 </div>
                                 <div class="font-bold text-white text-xs">Back-End Autônomo</div>
                                 <ul class="text-[11px] text-zinc-300 font-mono space-y-1">
                                     <li>• gerar_db.py (OCR 3x)</li>
+                                    <li>• studio_worker.py (8090)</li>
                                     <li>• sincronizador_notion</li>
-                                    <li>• Sincronizador da Fila</li>
-                                    <li>• auditor_arquivos_md</li>
+                                    <li>• Fila.py + auditor_md</li>
                                 </ul>
                                 <div
                                     class="text-[10px] font-mono text-purple-300 pt-1 border-t border-white/10 flex items-center justify-between">
-                                    <span>REST PUT / DELETE</span>
+                                    <span>REST PUT / PATCH / DEL</span>
                                     <span>⇄</span>
                                 </div>
                             </div>
@@ -1838,10 +2118,10 @@ Convert static text into a dynamic visual learning experience. Create a shot-by-
                                 </div>
                                 <div class="font-bold text-white text-xs">Firebase RTDB + Notion</div>
                                 <ul class="text-[11px] text-zinc-300 font-mono space-y-1">
-                                    <li>• /db_json (Leitura Global)</li>
-                                    <li>• /fila_md (Fila Mutação)</li>
-                                    <li>• 3 Databases Notion</li>
-                                    <li>• Synced Blocks Espelho</li>
+                                    <li>• /db_meta + /db_json</li>
+                                    <li>• /db_conteudo/$aula_id</li>
+                                    <li>• /fila_md + /fila_studio</li>
+                                    <li>• 3 Databases + Synced</li>
                                 </ul>
                                 <div
                                     class="text-[10px] font-mono text-amber-300 pt-1 border-t border-white/10 flex items-center justify-between">
@@ -1859,30 +2139,38 @@ Convert static text into a dynamic visual learning experience. Create a shot-by-
                                         FRONT-END SPA</span>
                                     <span class="text-base">⚡</span>
                                 </div>
-                                <div class="font-bold text-white text-xs">Study OS V3.2 (Web)</div>
+                                <div class="font-bold text-white text-xs">Study OS V3.3 (Web)</div>
                                 <ul class="text-[11px] text-zinc-300 font-mono space-y-1">
-                                    <li>• ES6 Code Splitting</li>
-                                    <li>• Cache LRU 200x (.md)</li>
-                                    <li>• Bloco 15 Fuzzy Match</li>
+                                    <li>• 11 Camadas + Cache API</li>
+                                    <li>• Code Splitting (8 Modais)</li>
+                                    <li>• Studio Admin &amp; Diff A/B</li>
                                     <li>• Cinema &amp; Lupa 2.2x</li>
                                 </ul>
                                 <div
                                     class="text-[10px] font-mono text-emerald-300 pt-1 border-t border-white/10 flex items-center justify-between">
-                                    <span>Edição Inline</span>
-                                    <span>↺ /fila_md</span>
+                                    <span>Edição &amp; Studio</span>
+                                    <span>↺ /fila_*</span>
                                 </div>
                             </div>
                         </div>
 
                         <!-- Barra de Ciclo Reverso (Write-Back Loop) -->
                         <div
-                            class="p-3 rounded-xl bg-black/70 border border-white/10 font-mono text-[11px] text-zinc-300 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
-                            <span class="text-cyan-300 font-bold">🔄 CICLO REVERSO (WRITE-BACK EM TEMPO REAL):</span>
-                            <span>Edição na Web SPA ➔ <code class="text-amber-300">POST /fila_md</code> ➔ <code
-                                    class="text-purple-300">Sincronizador da Fila.py</code> ➔ Atualiza <code
-                                    class="text-cyan-300">Disco (.md)</code> + <code
-                                    class="text-amber-300">Firebase (/db_json)</code> + <code
-                                    class="text-rose-300">Notion (Synced Block + 5 Mídias)</code></span>
+                            class="p-3 rounded-xl bg-black/70 border border-white/10 font-mono text-[11px] text-zinc-300 space-y-1.5">
+                            <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
+                                <span class="text-cyan-300 font-bold">🔄 WRITE-BACK (NOTION/DRIVE):</span>
+                                <span>Edição na Web SPA ➔ <code class="text-amber-300">POST /fila_md</code> ➔ <code
+                                        class="text-purple-300">Sincronizador da Fila.py</code> ➔ Atualiza <code
+                                        class="text-cyan-300">Disco (.md)</code> + <code
+                                        class="text-amber-300">Firebase</code> + <code
+                                        class="text-rose-300">Notion (Synced Block)</code></span>
+                            </div>
+                            <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 pt-1.5 border-t border-white/10">
+                                <span class="text-indigo-300 font-bold">⚡ PIPELINE STUDIO (NOTEBOOKLM):</span>
+                                <span>Admin na Web SPA ➔ <code class="text-indigo-300">PUT /fila_studio</code> ➔ <code
+                                        class="text-purple-300">studio_worker.py</code> ➔ NotebookLM ➔ Auto-Aprovação (Texto/JSON) ou <code
+                                        class="text-emerald-300">Staging Diff A/B</code> (Mídia)</span>
+                            </div>
                         </div>
                     </div>
 
@@ -2050,64 +2338,60 @@ Convert static text into a dynamic visual learning experience. Create a shot-by-
                                     <div class="space-y-1.5 flex-1">
                                         <div class="flex flex-wrap items-center justify-between gap-2">
                                             <h5 class="text-xs font-mono font-bold text-indigo-300 uppercase">Geração
-                                                dos 4 Artefatos Multimodais com Prompts Especializados</h5>
+                                                dos 8 Artefatos (Prompts Mestres &amp; Studio Worker)</h5>
                                             <span
-                                                class="px-2 py-0.5 rounded text-[10px] font-mono bg-pink-500/10 text-pink-300 border border-pink-500/20">4
-                                                Formatos</span>
+                                                class="px-2 py-0.5 rounded text-[10px] font-mono bg-pink-500/10 text-pink-300 border border-pink-500/20">8
+                                                Formatos &bull; Lote Automático</span>
                                         </div>
                                         <p class="text-xs text-notion-muted leading-relaxed">
-                                            Com a base enriquecida, disparamos a criação de cada artefato complementar
-                                            utilizando prompts mestres com diretrizes estéticas e regras rigorosas de
-                                            saída:
+                                            Com a base enriquecida, disparamos — manualmente ou em lote pelo
+                                            <strong class="text-indigo-300">Painel Studio Admin + <code class="font-mono">studio_worker.py</code></strong>
+                                            — a criação dos 8 artefatos complementares utilizando os prompts oficiais de
+                                            <code class="font-mono text-emerald-300">prompts.json</code>:
                                         </p>
                                     </div>
                                 </div>
 
-                                <!-- Grid de Prompts das 4 Mídias (Resumo + Link para Biblioteca Acima) -->
+                                <!-- Grid de Prompts das Mídias + Interativos (Resumo + Link para Biblioteca Acima) -->
                                 <div
                                     class="ml-10 p-4 rounded-xl bg-black/70 border border-white/10 font-mono text-xs space-y-2.5 text-zinc-300 keep-dark-theme">
                                     <div class="flex items-start gap-2">
                                         <span class="text-emerald-400 font-bold shrink-0">🎙️ Audio:</span>
-                                        <span class="text-emerald-300">"**Task: High-Fidelity Audio Script Generation
-                                            (Cognitive Mastery Edition)** — Persona: Distinguished Technical Architect
-                                            (Lex Fridman + Robert C. Martin) &bull; First Principles Protocol &bull;
-                                            Granular &amp; Holistic Modes"</span>
+                                        <span class="text-emerald-300">"High-Fidelity Audio Script (Cognitive Mastery Edition) — Persona: Distinguished Technical Architect (Lex Fridman + Robert C. Martin) &bull; First Principles"</span>
                                     </div>
                                     <div class="flex items-start gap-2">
                                         <span class="text-purple-400 font-bold shrink-0">🎬 Video:</span>
                                         <span class="text-purple-300 leading-snug">
-                                            "**Task: Video Lesson Script &amp; Storyboard Generation (Cinematic Tech
-                                            Edition)** — Persona: Digital Architect &amp; Director &bull; Dark Blue Tech
-                                            / DevOps Aesthetic &bull; Shot-by-Shot Storyboard Table"
+                                            "Cinematic Tech Edition &amp; Storyboard + High-End Tech Blueprint HUD — Dark Blue Tech / DevOps Aesthetic &amp; Shot-by-Shot Storyboard"
                                         </span>
                                     </div>
                                     <div class="flex items-start gap-2">
                                         <span class="text-amber-400 font-bold shrink-0">📊 Infographic:</span>
-                                        <span class="text-amber-300">"High-end 3D Digital Art with a 'Dark Mode' Tech
-                                            Aesthetic — Esports/HUD Overlays, Hexagonal Grid &amp; Professional
-                                            Cyberpunk Palette ('IBM meets Cyberpunk 2077')"</span>
+                                        <span class="text-amber-300">"High-end 3D Digital Art Dark Mode — Esports/HUD Overlays, Hexagonal Grid &amp; Professional Cyberpunk ('IBM meets Cyberpunk 2077')"</span>
                                     </div>
                                     <div class="flex items-start gap-2">
                                         <span class="text-blue-400 font-bold shrink-0">📽️ Keynote:</span>
-                                        <span class="text-blue-300">"Task: Cinematic Keynote Deck Generation (Unreal
-                                            Engine &amp; Gamer Edition) — Cyber-Industrial Art Director &bull; Game
-                                            Mechanics Metaphors (Health Bar / XP Bar) &bull; UE5 + 8-bit Pixel Art
-                                            Contrast"</span>
+                                        <span class="text-blue-300">"Cinematic Keynote Deck (Unreal Engine &amp; Gamer Edition) — Cyber-Industrial Art Director &bull; Game Mechanics Metaphors + 8-bit Pixel Art"</span>
+                                    </div>
+                                    <div class="flex items-start gap-2">
+                                        <span class="text-violet-400 font-bold shrink-0">🃏 Flashcards &amp; 🎯 Quiz:</span>
+                                        <span class="text-violet-300">"Gamer Mindset Active Recall Deck (SRS) &amp; Senior Engineering Manager Technical Assessment (Taxonomia de Bloom Níveis 1–3)"</span>
+                                    </div>
+                                    <div class="flex items-start gap-2">
+                                        <span class="text-sky-400 font-bold shrink-0">📋 Reports &amp; 🧠 Mindmap:</span>
+                                        <span class="text-sky-300">"Technical Intelligence Report (Senior Architect/CTO — Executive Summary, Trade-offs &amp; Glossário) + Grafo Neural JSON"</span>
                                     </div>
                                     <div
                                         class="pt-2 border-t border-white/10 flex items-center justify-between text-[11px]">
-                                        <span class="text-zinc-400">Todos os 4 prompts completos estão disponíveis para
+                                        <span class="text-zinc-400">Todos os 7 prompts completos estão disponíveis para
                                             cópia na Seção 05:</span>
                                         <a href="#biblioteca-prompts-artefatos"
                                             class="text-indigo-400 hover:text-indigo-300 underline font-semibold">↑ Ver
-                                            &amp; Copiar os 4 Prompts Completos</a>
+                                            &amp; Copiar os 7 Prompts Completos</a>
                                     </div>
                                 </div>
                                 <p class="ml-10 text-[11px] text-notion-muted">
-                                    Com esses outputs validados, todos os arquivos gerados (<code
-                                        class="text-zinc-300">.m4a</code>, <code class="text-zinc-300">.pdf</code>,
-                                    <code class="text-zinc-300">.png/.jpg</code> e <code
-                                        class="text-zinc-300">.mp4</code>) são armazenados organizadamente.
+                                    Artefatos não-visuais (<code class="text-zinc-300">mapa-mental.json</code>, <code class="text-zinc-300">flashcards.md</code>, <code class="text-zinc-300">quiz.md</code> e <code class="text-zinc-300">relatorio.md</code>) são auto-aprovados direto para a aula; já os visuais/mídia (<code class="text-zinc-300">.m4a</code>, <code class="text-zinc-300">.pdf</code>, <code class="text-zinc-300">.png/.jpg</code> e <code class="text-zinc-300">.mp4</code>) passam pelo <strong class="text-zinc-200">Painel de Revisão Diff A/B</strong> em <code class="text-zinc-300">staging/</code> antes da publicação oficial.
                                 </p>
                             </div>
                         </div>
@@ -2147,7 +2431,11 @@ Convert static text into a dynamic visual learning experience. Create a shot-by-
                                             class="text-cyan-300 font-mono">.pdf</code> sem OCR, <code
                                             class="text-cyan-300 font-mono">.pdf</code> com OCR, <code
                                             class="text-cyan-300 font-mono">.mp4</code>, <code
-                                            class="text-cyan-300 font-mono">.m4a</code> e scripts de código) são salvos
+                                            class="text-cyan-300 font-mono">.m4a</code>, <code
+                                            class="text-cyan-300 font-mono">mapa-mental.json</code>, <code
+                                            class="text-cyan-300 font-mono">flashcards.md</code>, <code
+                                            class="text-cyan-300 font-mono">quiz.md</code>, <code
+                                            class="text-cyan-300 font-mono">relatorio.md</code> e scripts de código) são salvos
                                         em <code
                                             class="text-cyan-300 font-mono">G:\Meu Drive\CienciaComputacao\[1°..8° semestre | Cursos]\[Emoji Matéria]\Aula 0X\</code>.
                                         O Google Drive for Desktop sincroniza os binários para a nuvem em background e
@@ -2167,7 +2455,7 @@ Convert static text into a dynamic visual learning experience. Create a shot-by-
                                             Autônomo, Extrator SQLite/OAuth2 e Detector Triplo de OCR (<code
                                                 class="font-mono">gerar_db.py</code>)</h5>
                                         <span
-                                            class="px-2 py-0.5 rounded text-[10px] font-mono bg-purple-500/10 text-purple-300 border border-purple-500/20">1.400+
+                                            class="px-2 py-0.5 rounded text-[10px] font-mono bg-purple-500/10 text-purple-300 border border-purple-500/20">1.893
                                             Linhas &bull; ThreadPool</span>
                                     </div>
                                     <p class="text-xs text-notion-muted leading-relaxed">
@@ -2200,11 +2488,15 @@ Convert static text into a dynamic visual learning experience. Create a shot-by-
                                                 class="text-emerald-300">temOCR: false ("sem_ocr")</code> para slides
                                             visuais e <code class="text-amber-300">temOCR: true ("com_ocr")</code> para
                                             livros/artigos teóricos.</li>
-                                        <li>• <strong>Embutimento de Markdown:</strong> Lê o conteúdo integral dos
-                                            arquivos <code class="text-purple-300">.md</code> em UTF-8 e o embute na
-                                            propriedade <code class="text-purple-300">conteudoTexto</code> dentro de
-                                            <code class="text-purple-300">db.personal.json</code> / <code
-                                                class="text-purple-300">db.json</code>.
+                                        <li>• <strong>Catálogo Leve &amp; Particionamento em Nuvem:</strong> Lê e
+                                            classifica <code class="text-purple-300">.md</code> + os 4 novos artefatos em
+                                            <code class="text-purple-300">db.personal.json</code>, mas no upload para o
+                                            Firebase envia o <strong>Catálogo Leve</strong> (<code
+                                                class="text-purple-300">/db_json</code>, ~2 MB sem textos inline), grava
+                                            o carimbo em <code class="text-purple-300">/db_meta</code> (~100 B) e publica
+                                            cada aula isoladamente em <code
+                                                class="text-emerald-300">/db_conteudo/{aulaId}</code> para carregamento
+                                            sob demanda.
                                         </li>
                                     </ul>
                                 </div>
@@ -2220,19 +2512,24 @@ Convert static text into a dynamic visual learning experience. Create a shot-by-
                                         <h5 class="text-xs font-mono font-bold text-amber-300 uppercase">Arquitetura
                                             "Dividir para Conquistar" no Firebase Realtime Database</h5>
                                         <span
-                                            class="px-2 py-0.5 rounded text-[10px] font-mono bg-amber-500/10 text-amber-300 border border-amber-500/20">3
+                                            class="px-2 py-0.5 rounded text-[10px] font-mono bg-amber-500/10 text-amber-300 border border-amber-500/20">7
                                             Nós Isolados &bull; REST JSON</span>
                                     </div>
                                     <p class="text-xs text-notion-muted leading-relaxed">
                                         O banco no Firebase (<code
-                                            class="text-amber-200 font-mono">study-os-fcc4a-default-rtdb.firebaseio.com</code>)
-                                        é particionado em 3 nós independentes para máxima segurança e velocidade:
+                                            class="text-amber-200 font-mono">study-os-beta-default-rtdb.firebaseio.com</code>)
+                                        é particionado em nós independentes para máxima segurança e economia de banda:
                                         <strong class="text-white">1. <code
-                                                class="font-mono text-amber-300">/db_json</code></strong> (árvore
-                                        consolidada servida em milissegundos para qualquer dispositivo);
+                                                class="font-mono text-amber-300">/db_meta</code> + <code
+                                                class="font-mono text-amber-300">/db_json</code></strong> (catálogo leve
+                                        validado por timestamp de ~100 bytes para evitar downloads repetidos) e <strong
+                                            class="text-white"><code
+                                                class="font-mono text-emerald-300">/db_conteudo/$aula_id</code></strong>
+                                        (hidratação sob demanda por aula com Cache API persistente);
                                         <strong class="text-white">2. <code
-                                                class="font-mono text-cyan-300">/fila_md</code></strong> (fila
-                                        assíncrona de mutações criadas na interface web); e
+                                                class="font-mono text-cyan-300">/fila_md</code> &amp; <code
+                                                class="font-mono text-indigo-300">/fila_studio</code></strong> (filas
+                                        assíncronas de mutações e geração de artefatos do Studio Worker); e
                                         <strong class="text-white">3. <code
                                                 class="font-mono text-rose-300">/notion</code></strong> (espelho
                                         relacional das 3 databases do Notion).
@@ -2255,14 +2552,17 @@ Convert static text into a dynamic visual learning experience. Create a shot-by-
                                             Zero-Build &bull; Lupa 2.2x</span>
                                     </div>
                                     <p class="text-xs text-notion-muted leading-relaxed">
-                                        Ao abrir o Study OS, <code class="text-emerald-300 font-mono">api.js</code>
-                                        busca primeiro o <code class="text-emerald-300 font-mono">/db_json</code>
-                                        atualizado no Firebase (com fallback imediato para o cache local e <code
-                                            class="text-emerald-300 font-mono">db.json</code>). O <code
-                                            class="text-emerald-300 font-mono">mediaResolver.js</code> resolve cada
-                                        arquivo com prioridade inteligente: <strong>1º Blob Local em Disco</strong> (se
-                                        a pasta local estiver vinculada) ➔ <strong>2º Streaming Direto do Google Drive
-                                            via Drive ID</strong> (<code
+                                        Em produção no GitHub Pages, <code class="text-emerald-300 font-mono">api.js</code>
+                                        consulta primeiro <code class="text-emerald-300 font-mono">/db_meta.json</code>
+                                        (~100 bytes): se o <code class="font-mono">atualizado_em</code> bater com o cache
+                                        real do navegador (<code class="font-mono">localStorage</code>), abre sem baixar
+                                        um único byte de <code class="font-mono">/db_json</code> (e nunca exibe mockup
+                                        online); cada aula é hidratada sob demanda em <code
+                                            class="text-emerald-300 font-mono">/db_conteudo/{aulaId}</code> com
+                                        persistência na <strong class="text-white">Cache API</strong>. Já o <code
+                                            class="text-emerald-300 font-mono">mediaResolver.js</code> resolve mídias com
+                                        prioridade inteligente: <strong>1º Blob Local em Disco</strong> (quando vinculado)
+                                        ➔ <strong>2º Streaming Direto do Google Drive via Drive ID</strong> (<code
                                             class="font-mono">lh3.googleusercontent.com</code> para imagens e <code
                                             class="font-mono">/preview</code> para PDFs/vídeos/áudios) ➔ <strong>3º
                                             Caminho Relativo Codificado</strong>.
@@ -2307,7 +2607,7 @@ Convert static text into a dynamic visual learning experience. Create a shot-by-
         </section>
 
         <!-- ====================================================================== -->
-        <!-- SEÇÃO 7: OS 4 MOTORES PYTHON, FILA REST & SYNCED BLOCKS DO NOTION       -->
+        <!-- SEÇÃO 7: OS 5 MOTORES PYTHON, FILA REST & SYNCED BLOCKS DO NOTION       -->
         <!-- ====================================================================== -->
         <section id="motores-python" class="space-y-6 scroll-mt-24">
             <div class="flex items-center justify-between flex-wrap gap-3">
@@ -2317,10 +2617,10 @@ Convert static text into a dynamic visual learning experience. Create a shot-by-
                         07
                     </div>
                     <div>
-                        <h2 class="text-2xl font-bold text-white">Os 4 Motores Python &amp; A Engenharia dos Synced
+                        <h2 class="text-2xl font-bold text-white">Os 5 Motores Python &amp; A Engenharia dos Synced
                             Blocks no Notion</h2>
-                        <p class="text-xs text-notion-muted">Como o Back-End local orquestra o Google Drive, o Firebase
-                            RTDB e as 3 Databases Relacionais do Notion sem perder nenhum arquivo</p>
+                        <p class="text-xs text-notion-muted">Como o Back-End local orquestra o Google Drive, o NotebookLM
+                            Studio Worker, o Firebase RTDB e as 3 Databases Relacionais do Notion sem perder nenhum arquivo</p>
                     </div>
                 </div>
                 <span
@@ -2330,7 +2630,7 @@ Convert static text into a dynamic visual learning experience. Create a shot-by-
             </div>
 
             <div class="p-6 sm:p-8 rounded-3xl bg-notion-card border border-notion-border space-y-8">
-                <!-- Grid dos 4 Scripts Python -->
+                <!-- Grid dos 5 Scripts Python -->
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <!-- Motor 1 -->
                     <div
@@ -2339,17 +2639,19 @@ Convert static text into a dynamic visual learning experience. Create a shot-by-
                             <span
                                 class="px-2.5 py-1 rounded-lg bg-purple-500/20 text-purple-300 font-mono text-xs font-bold">🐍
                                 1. gerar_db.py</span>
-                            <span class="text-[10px] font-mono text-notion-muted">1.407 linhas</span>
+                            <span class="text-[10px] font-mono text-notion-muted">1.893 linhas</span>
                         </div>
-                        <h3 class="text-sm font-bold text-white">Indexador Google Drive, SQLite Extractor &amp; Detector
-                            OCR</h3>
+                        <h3 class="text-sm font-bold text-white">Indexador Google Drive, Detector OCR &amp; Publicador
+                            Catálogo Leve</h3>
                         <p class="text-xs text-notion-muted leading-relaxed">
-                            Constrói a árvore completa do <code
-                                class="font-mono text-purple-300">db.personal.json</code>. Lê o banco SQLite interno do
-                            Google Drive Desktop para capturar IDs de nuvem sem latência, autentica via OAuth2 para
-                            garantir permissões públicas nas pastas de aula e classifica cada PDF com motor triplo de
-                            OCR (<code class="font-mono">PyMuPDF</code> / <code class="font-mono">pypdf</code> / <code
-                                class="font-mono">zlib</code> binário).
+                            Constrói <code class="font-mono text-purple-300">db.personal.json</code>, classifica as 11
+                            camadas (isolando <code class="font-mono">mapa-mental.json</code>, <code
+                                class="font-mono">flashcards.md</code>, <code class="font-mono">quiz.md</code> e <code
+                                class="font-mono">relatorio.md</code>), lê o SQLite do Drive Desktop + OAuth2, aplica o
+                            motor triplo de OCR (<code class="font-mono">PyMuPDF</code> / <code
+                                class="font-mono">pypdf</code> / <code class="font-mono">zlib</code>) e publica no
+                            Firebase o catálogo leve (<code class="font-mono">/db_json</code> + <code
+                                class="font-mono">/db_meta</code> + <code class="font-mono">/db_conteudo</code>).
                         </p>
                     </div>
 
@@ -2367,7 +2669,7 @@ Convert static text into a dynamic visual learning experience. Create a shot-by-
                         <p class="text-xs text-notion-muted leading-relaxed">
                             Segue a regra <em>"O Banco de Dados é Sagrado"</em>: nunca apaga dados existentes, apenas
                             enriquece bidirecionalmente capas, professores, status e tags entre o Notion e o <code
-                                class="font-mono text-rose-300">db.json</code>. Possui algoritmo de <strong>Match
+                                class="font-mono text-rose-300">db.personal.json</code>. Possui algoritmo de <strong>Match
                                 Inteligente</strong> que ignora emojis/acentos, preserva <code
                                 class="font-mono">C++ / C#</code> e desempata matérias pelo semestre.
                         </p>
@@ -2388,8 +2690,8 @@ Convert static text into a dynamic visual learning experience. Create a shot-by-
                                 class="font-mono text-cyan-300">?auth=FIREBASE_SECRET</code>, baixa todas as mutações
                             pendentes em <code class="font-mono text-cyan-300">/fila_md</code> ordenadas por <code
                                 class="font-mono">timestamp</code>, aplica as modificações no arquivo físico do Drive,
-                            no <code class="font-mono">db.json</code>, no Firebase e nas páginas do Notion, e limpa a
-                            fila com <code class="font-mono">DELETE</code>.
+                            no <code class="font-mono">db.personal.json</code>, no Firebase e nas páginas do Notion, e
+                            limpa a fila com <code class="font-mono">DELETE</code>.
                         </p>
                     </div>
 
@@ -2400,18 +2702,47 @@ Convert static text into a dynamic visual learning experience. Create a shot-by-
                             <span
                                 class="px-2.5 py-1 rounded-lg bg-emerald-500/20 text-emerald-300 font-mono text-xs font-bold">📊
                                 4. auditor_arquivos_md.py</span>
-                            <span class="text-[10px] font-mono text-notion-muted">392 linhas</span>
+                            <span class="text-[10px] font-mono text-notion-muted">450 linhas</span>
                         </div>
                         <h3 class="text-sm font-bold text-white">Auditor de Completude Multimídia &amp; Gerador de
                             Relatório CSV</h3>
                         <p class="text-xs text-notion-muted leading-relaxed">
-                            Inspeciona cada pasta de aula no disco contra o índice de OCR do banco, verificando a
-                            presença das <strong>6 categorias obrigatórias</strong> (<code class="font-mono">MD</code>,
-                            <code class="font-mono">JPG</code>, <code class="font-mono">PNG</code>, <code
-                                class="font-mono">PDF sem OCR</code>, <code class="font-mono">PDF com OCR</code>, <code
-                                class="font-mono">MP4</code> e <code class="font-mono">Áudio M4A</code>) e exportando o
-                            diagnóstico completo em <code
+                            Inspeciona cada pasta de aula no disco contra o índice de OCR do banco, verificando tanto as
+                            camadas multimídia (<code class="font-mono">MD</code>, <code class="font-mono">JPG</code>,
+                            <code class="font-mono">PNG</code>, <code class="font-mono">PDF sem/com OCR</code>, <code
+                                class="font-mono">MP4</code> e <code class="font-mono">Áudio M4A</code>) quanto os 4
+                            novos artefatos (<code class="font-mono">mapa-mental.json</code>, <code
+                                class="font-mono">flashcards.md</code>, <code class="font-mono">quiz.md</code> e <code
+                                class="font-mono">relatorio.md</code>), exportando o diagnóstico em <code
                                 class="font-mono text-emerald-300">relatorio_auditoria_aulas.csv</code>.
+                        </p>
+                    </div>
+
+                    <!-- Motor 5 -->
+                    <div
+                        class="md:col-span-2 p-5 rounded-2xl bg-gradient-to-br from-indigo-950/35 via-black/40 to-violet-950/25 border border-indigo-500/40 hover:border-indigo-400/70 transition-colors space-y-3">
+                        <div class="flex items-center justify-between gap-2 flex-wrap">
+                            <span
+                                class="px-2.5 py-1 rounded-lg bg-indigo-500/20 text-indigo-300 font-mono text-xs font-bold">⚡
+                                5. studio_worker.py (+ prompts.json)</span>
+                            <span class="text-[10px] font-mono text-indigo-300">3.829 linhas &bull; Porta 8090 &bull; NotebookLM Automation</span>
+                        </div>
+                        <h3 class="text-sm font-bold text-white">Studio Worker Local — Automação NotebookLM, Guardião de
+                            Cota &amp; Staging Diff A/B</h3>
+                        <p class="text-xs text-notion-muted leading-relaxed">
+                            Serviço local isolado conectado ao <strong class="text-white">Painel Studio Admin</strong> e
+                            à fila online <code class="font-mono text-indigo-300">/fila_studio</code> no Firebase
+                            (permitindo enfileirar tarefas até do celular com o PC desligado). Opera com
+                            <strong>concorrência escalonada</strong> (até 10 gerações simultâneas na nuvem via <code
+                                class="font-mono">notebooklm-py</code>), <strong>Guardião de Cota Persistente</strong>
+                            (pausa como <code class="font-mono">aguardando_cota</code> e retoma automaticamente sem
+                            perder jobs), <strong>auto-aprovação imediata</strong> dos 4 artefatos não-visuais
+                            (<code class="font-mono">mindmap</code>, <code class="font-mono">flashcards</code>, <code
+                                class="font-mono">quiz</code>, <code class="font-mono">relatorio</code>) e
+                            <strong>Área de Revisão Diff A/B</strong> em <code class="font-mono">staging/</code> para os
+                            4 artefatos visuais/mídia (<code class="font-mono">infografico</code>, <code
+                                class="font-mono">slides</code>, <code class="font-mono">audio</code> e <code
+                                class="font-mono">video</code>).
                         </p>
                     </div>
                 </div>
@@ -2557,7 +2888,7 @@ Convert static text into a dynamic visual learning experience. Create a shot-by-
         </section>
 
         <!-- ====================================================================== -->
-        <!-- SEÇÃO 8: ENGENHARIA FRONT-END V3.2, SEGURANÇA & 47 TESTES              -->
+        <!-- SEÇÃO 8: ENGENHARIA FRONT-END V3.3, SEGURANÇA & 71 TESTES              -->
         <!-- ====================================================================== -->
         <section id="engenharia-frontend" class="space-y-6 scroll-mt-24">
             <div class="flex items-center justify-between flex-wrap gap-3">
@@ -2567,15 +2898,15 @@ Convert static text into a dynamic visual learning experience. Create a shot-by-
                         08
                     </div>
                     <div>
-                        <h2 class="text-2xl font-bold text-white">Engenharia Front-End V3.2, Segurança &amp; Qualidade
+                        <h2 class="text-2xl font-bold text-white">Engenharia Front-End V3.3, Segurança &amp; Qualidade
                             Automatizada</h2>
                         <p class="text-xs text-notion-muted">Arquitetura ES6 Modular Zero-Build, Code Splitting, Cache
-                            LRU, Governança Visitante vs. Admin e 47 Testes Unitários</p>
+                            LRU, Governança Visitante vs. Admin e 71 Testes Unitários</p>
                     </div>
                 </div>
                 <span
                     class="px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 font-mono text-xs">
-                    47/47 Testes Passando ✅
+                    71/71 Testes Passando ✅
                 </span>
             </div>
 
@@ -2588,12 +2919,14 @@ Convert static text into a dynamic visual learning experience. Create a shot-by-
                         </div>
                         <p class="text-notion-muted leading-relaxed">
                             O ponto de entrada <code class="font-mono text-indigo-300">src/main.js</code> mantém o
-                            carregamento inicial ultraleve: os 6 modais pesados (<code
+                            carregamento inicial ultraleve: os <strong>8 modais pesados</strong> (<code
                                 class="font-mono">ImmersiveCinemaModal</code>, <code
                                 class="font-mono">ArquivosReferenciasModal</code>, <code
                                 class="font-mono">AtividadeModal</code>, <code class="font-mono">DataAulaModal</code>,
-                            <code class="font-mono">DisciplineMetaModal</code> e <code
-                                class="font-mono">ImportReportModal</code>) são carregados sob demanda via <code
+                            <code class="font-mono">DisciplineMetaModal</code>, <code
+                                class="font-mono">ImportReportModal</code>, <code
+                                class="font-mono">RelatorioModal</code> e <code
+                                class="font-mono">StudioAdminModal</code>) são carregados sob demanda via <code
                                 class="font-mono">import()</code> assíncrono apenas quando acionados.
                         </p>
                     </div>
@@ -2622,8 +2955,10 @@ Convert static text into a dynamic visual learning experience. Create a shot-by-
                                 class="font-mono">rootMargin: 300px</code>) para hidratar <code
                                 class="font-mono">src</code> de iframes, vídeos e imagens apenas quando se aproximam da
                             viewport. Ao fechar uma aula ou trocar de rota, <code
-                                class="font-mono">revogarBlobsDaAula()</code> libera imediatamente os <code
-                                class="font-mono">ObjectURLs</code> da memória RAM.
+                                class="font-mono">revogarBlobsDaAula()</code> e <code
+                                class="font-mono">destroyAllNeuralMindmaps()</code> liberam imediatamente <code
+                                class="font-mono">ObjectURLs</code> e loops <code class="font-mono">&lt;canvas&gt;</code>
+                            da memória.
                         </p>
                     </div>
 
@@ -2691,28 +3026,35 @@ Convert static text into a dynamic visual learning experience. Create a shot-by-
                                 Modo Admin</div>
                             <p class="text-[11px] text-notion-muted leading-relaxed">
                                 Por padrão, qualquer pessoa acessa o Study OS em <strong>Modo Visitante</strong>:
-                                navegação livre pelos semestres, leitura dos 15 blocos autorais, Lupa 2.2x e Modo Cinema,
-                                enquanto avisos internos de <em>"Falta Mídia"</em>, botões de edição e o <strong>Cofre de Material Bruto (Bloco 15 — PDFs com OCR e apostilas de terceiros)</strong> ficam 100%
-                                ocultos e protegidos por direitos autorais. Para editar dados ou consultar o Material Bruto, o serviço <code
-                                    class="font-mono">auth.js</code> exige autenticação validada por <strong>hash
+                                navegação livre pelos semestres, leitura dos 15 blocos autorais, Mapa Mental Neural,
+                                Flashcards 3D + SRS, Quiz Tático, Relatório Técnico, Lupa 2.2x e Modo Cinema — enquanto
+                                avisos internos de <em>"Falta Mídia"</em>, botões de edição, controles do
+                                <strong>Studio Admin</strong> e o <strong>Cofre de Material Bruto (Bloco 15 — PDFs com
+                                    OCR e apostilas de terceiros)</strong> ficam 100% ocultos e protegidos por direitos
+                                autorais. Para editar dados, operar o Studio ou consultar o Material Bruto, o serviço
+                                <code class="font-mono">auth.js</code> exige autenticação validada por <strong>hash
                                     SHA-256 via Web Crypto API</strong>.
                             </p>
                         </div>
 
                         <div class="p-4 rounded-xl bg-notion-card border border-notion-border space-y-2">
-                            <div class="font-mono font-bold text-amber-300">🛡️ Blindagem Granular (<code
+                            <div class="font-mono font-bold text-amber-300">🛡️ Blindagem &amp; Economia de Banda (<code
                                     class="font-mono">database.rules.json</code>)</div>
                             <ul class="text-[11px] text-notion-muted space-y-1 leading-relaxed">
-                                <li>• <strong class="text-white"><code class="font-mono">/db_json</code>:</strong>
-                                    Leitura pública (<code class="font-mono">.read: true</code>) e escrita bloqueada sem
-                                    token (<code class="font-mono">.write: "auth != null"</code>).</li>
+                                <li>• <strong class="text-white"><code class="font-mono">/db_meta</code> &amp; <code
+                                            class="font-mono">/db_json</code>:</strong> Leitura pública do catálogo leve
+                                    (~2 MB, validado antes por <code class="font-mono">/db_meta</code> de ~100 bytes)
+                                    com escrita protegida.</li>
                                 <li>• <strong class="text-white"><code
-                                            class="font-mono">/fila_md/$itemId</code>:</strong> Leitura restrita ao
-                                    sincronizador Python; escrita pública permitida estritamente para <strong>inserção
-                                        de novos itens (<code
-                                            class="font-mono">!data.exists() &amp;&amp; newData.exists()</code>)</strong>
-                                    validados por schema, bloqueando qualquer <code class="font-mono">DELETE</code> ou
-                                    sobrescrita externa.</li>
+                                            class="font-mono">/db_conteudo/$aula_id</code>:</strong> Leitura pública
+                                    restrita <strong>por aula individual</strong> (~15 KB sob demanda), mantendo a raiz
+                                    <code class="font-mono">/db_conteudo</code> fechada (<code
+                                        class="font-mono">auth != null</code>) contra downloads em massa para proteger a
+                                    cota do Firebase.</li>
+                                <li>• <strong class="text-white"><code class="font-mono">/fila_md</code> &amp; <code
+                                            class="font-mono">/fila_studio</code>:</strong> Validação estrita de schema
+                                    por item/job e isolamento total de <code class="font-mono">/notion</code> e <code
+                                        class="font-mono">$other: false</code>.</li>
                             </ul>
                         </div>
                     </div>
@@ -3162,32 +3504,53 @@ Convert static text into a dynamic visual learning experience. Create a shot-by-
             sincronizarUiTemaSobre(proximo);
         }
 
+        function copiarComFallback(texto, aoSucesso) {
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(texto).then(aoSucesso).catch(function () {
+                    copiarViaTextarea(texto, aoSucesso);
+                });
+            } else {
+                copiarViaTextarea(texto, aoSucesso);
+            }
+        }
+
+        function copiarViaTextarea(texto, aoSucesso) {
+            try {
+                var ta = document.createElement('textarea');
+                ta.value = texto;
+                ta.setAttribute('readonly', '');
+                ta.style.position = 'fixed';
+                ta.style.opacity = '0';
+                document.body.appendChild(ta);
+                ta.select();
+                document.execCommand('copy');
+                document.body.removeChild(ta);
+                if (typeof aoSucesso === 'function') aoSucesso();
+            } catch (_) { }
+        }
+
         function copiarTextoPrompt(btn, elementId) {
             var el = document.getElementById(elementId);
             if (!el) return;
             var texto = el.innerText || el.textContent || '';
-            if (navigator.clipboard && navigator.clipboard.writeText) {
-                navigator.clipboard.writeText(texto).then(function () {
-                    var original = btn.innerHTML;
-                    btn.innerHTML = '<span>✅</span> <span>Copiado!</span>';
-                    setTimeout(function () {
-                        btn.innerHTML = original;
-                    }, 2000);
-                });
-            }
+            copiarComFallback(texto, function () {
+                var original = btn.innerHTML;
+                btn.innerHTML = '<span>✅</span> <span>Copiado!</span>';
+                setTimeout(function () {
+                    btn.innerHTML = original;
+                }, 2000);
+            });
         }
 
         function copiarEmailContato(btn) {
             var email = 'renancarvalhoce6@gmail.com';
-            if (navigator.clipboard && navigator.clipboard.writeText) {
-                navigator.clipboard.writeText(email).then(function () {
-                    var original = btn.innerHTML;
-                    btn.innerHTML = '✅ Copiado!';
-                    setTimeout(function () {
-                        btn.innerHTML = original;
-                    }, 2000);
-                });
-            }
+            copiarComFallback(email, function () {
+                var original = btn.innerHTML;
+                btn.innerHTML = '✅ Copiado!';
+                setTimeout(function () {
+                    btn.innerHTML = original;
+                }, 2000);
+            });
         }
 
         (function () {

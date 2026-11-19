@@ -6,6 +6,17 @@
 
 import { slugify, normalizarCaminhoChave } from "../utils/domHelpers.js";
 import { obterBaseMediaPath } from "./storage.js";
+import {
+  normalizarNomeArtefato,
+  classificarArquivoArtefato,
+  separarArtefatosDaAula
+} from "../utils/artifactsClassifier.js";
+
+export {
+  normalizarNomeArtefato,
+  classificarArquivoArtefato,
+  separarArtefatosDaAula
+};
 
 // Mapeamentos em memória isolados
 const arquivosLocaisMap = new Map();
@@ -163,4 +174,178 @@ export function otimizarUrlCapa(url) {
     return url.replace(/w=\d+/, "w=420").replace(/q=\d+/, "q=70");
   }
   return url;
+}
+
+/**
+ * Busca nos arquivos locais vinculados (Pasta Local no PC) um artefato específico da aula
+ * pelo seu caminho da pasta + sufixo estrito (ex: 'mapa-mental.json', 'flashcards.md').
+ * @param {object} aula
+ * @param {string} role
+ * @returns {File | null}
+ */
+export function buscarArtefatoNoMapaLocal(aula, role) {
+  if (!arquivosLocaisMap || arquivosLocaisMap.size === 0 || !aula) return null;
+  const pastaAulaNorm = normalizarCaminhoChave(aula.local || "");
+
+  for (const [chave, file] of arquivosLocaisMap.entries()) {
+    const classif = classificarArquivoArtefato(file?.name || chave);
+    if (classif.role !== role) continue;
+
+    if (!pastaAulaNorm || chave.includes(pastaAulaNorm)) {
+      return file;
+    }
+  }
+  return null;
+}
+
+function normalizarEntradaArtefato(rawItem, urlFallback, role) {
+  if (!rawItem && !urlFallback) return null;
+
+  if (typeof rawItem === "string") {
+    const trimmed = rawItem.trim();
+    if (!trimmed) return null;
+    if (role === "mindmap" && (trimmed.startsWith("{") || trimmed.startsWith("["))) {
+      try {
+        return { nome: "mapa-mental.json", conteudoJson: JSON.parse(trimmed), conteudoTexto: trimmed };
+      } catch (_) {}
+    }
+    return { nome: trimmed.split("/").pop() || trimmed, local: trimmed, url: trimmed };
+  }
+
+  if (typeof rawItem === "object") {
+    return {
+      ...rawItem,
+      url: rawItem.url || urlFallback || ""
+    };
+  }
+
+  return null;
+}
+
+/**
+ * Resolve e isola os 4 novos artefatos da aula (Camadas 6 a 9) aplicando prioridade estrita
+ * e degradação graciosa (sem dados mockup injetados).
+ *
+ * @param {object} aula
+ * @returns {{
+ *   mindmap: { existe: boolean, nome: string, arquivo: object | null, fileLocal: File | null, url: string, dataJson: object | null, rawText: string },
+ *   flashcards: { existe: boolean, nome: string, arquivo: object | null, fileLocal: File | null, url: string, markdown: string },
+ *   quiz: { existe: boolean, nome: string, arquivo: object | null, fileLocal: File | null, url: string, markdown: string },
+ *   relatorio: { existe: boolean, nome: string, arquivo: object | null, fileLocal: File | null, url: string, markdown: string }
+ * }}
+ */
+export function resolverArtefatosAula(aula) {
+  const listaArquivos = Array.isArray(aula?.arquivos)
+    ? aula.arquivos
+    : (Array.isArray(aula?.filhos) ? aula.filhos : []);
+  const separados = separarArtefatosDaAula(listaArquivos);
+  const artObj = aula?.artifacts || {};
+
+  const criarDescriptor = (role, defaultNome, urlField) => {
+    const itemBruto = artObj[role] || separados.artifacts[role] || null;
+    const urlDireta = String(aula?.[urlField] || "").trim();
+    const arq = normalizarEntradaArtefato(itemBruto, urlDireta, role);
+    const fileLocal = buscarArtefatoNoMapaLocal(aula, role);
+
+    let urlResolvida = urlDireta;
+    if (arq) {
+      const fontes = resolverFontesMidia(arq, aula?.id || "");
+      urlResolvida = urlResolvida || arq.url || fontes.urlLocalConfigurado || fontes.urlLocalDireto || fontes.urlDriveDownload || "";
+    }
+
+    const existe = Boolean(arq || fileLocal || urlDireta);
+
+    if (role === "mindmap") {
+      let dataJson = arq?.conteudoJson || null;
+      if (!dataJson && arq && (arq.name || arq.root) && Array.isArray(arq.children || arq.root?.children)) {
+        dataJson = arq;
+      }
+      const rawText = String(arq?.conteudoTexto || "");
+      if (!dataJson && rawText.trim().startsWith("{")) {
+        try {
+          dataJson = JSON.parse(rawText);
+        } catch (_) {}
+      }
+
+      return {
+        existe,
+        nome: arq?.nome || fileLocal?.name || defaultNome,
+        arquivo: arq,
+        fileLocal,
+        url: urlResolvida,
+        dataJson,
+        rawText
+      };
+    }
+
+    const markdown = String(arq?.conteudoTexto || arq?.conteudo || arq?.texto || "");
+
+    return {
+      existe,
+      nome: arq?.nome || fileLocal?.name || defaultNome,
+      arquivo: arq,
+      fileLocal,
+      url: urlResolvida,
+      markdown
+    };
+  };
+
+  return {
+    mindmap: criarDescriptor("mindmap", "mapa-mental.json", "mindmapUrl"),
+    flashcards: criarDescriptor("flashcards", "flashcards.md", "flashcardsUrl"),
+    quiz: criarDescriptor("quiz", "quiz.md", "quizUrl"),
+    relatorio: criarDescriptor("relatorio", "relatorio.md", "relatorioUrl")
+  };
+}
+
+/**
+ * Carrega de forma assíncrona o conteúdo de um artefato (de conteúdo embutido, File local no PC ou fetch HTTP relativo).
+ * @param {object} descriptor
+ * @param {string} [aulaId=""]
+ * @param {'json' | 'text'} [tipo="text"]
+ * @returns {Promise<any>}
+ */
+export async function carregarConteudoArtefato(descriptor, aulaId = "", tipo = "text") {
+  if (!descriptor || !descriptor.existe) return null;
+
+  if (tipo === "json" && descriptor.dataJson) {
+    return descriptor.dataJson;
+  }
+  if (tipo === "text" && descriptor.markdown) {
+    return descriptor.markdown;
+  }
+
+  if (descriptor.fileLocal && typeof descriptor.fileLocal.text === "function") {
+    try {
+      const txt = await descriptor.fileLocal.text();
+      if (tipo === "json") return JSON.parse(txt);
+      return txt;
+    } catch (_) {}
+  }
+
+  const candidatos = [];
+  if (descriptor.arquivo) {
+    const f = resolverFontesMidia(descriptor.arquivo, aulaId);
+    if (f.blobUrl) candidatos.push(f.blobUrl);
+    if (f.urlLocalConfigurado) candidatos.push(f.urlLocalConfigurado);
+    if (f.urlLocalDireto) candidatos.push(f.urlLocalDireto);
+  }
+  if (descriptor.url && !candidatos.includes(descriptor.url)) {
+    candidatos.push(descriptor.url);
+  }
+
+  for (const url of candidatos) {
+    if (!url || url.includes("drive.google.com/file/d/")) continue;
+    try {
+      if (typeof fetch !== "function") break;
+      const resp = await fetch(url, { cache: "no-store" });
+      if (!resp.ok) continue;
+      if (tipo === "json") {
+        return await resp.json();
+      }
+      return await resp.text();
+    } catch (_) {}
+  }
+
+  return null;
 }

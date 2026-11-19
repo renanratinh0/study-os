@@ -8,7 +8,7 @@
 import { store, buscarRefDisciplina, buscarDisciplinaPorId, calcularStatusAula, verificarLinkNotebookDuplicado, extrairDriveIdDeLink } from "../core/store.js";
 import { mostrarToast, extrairNumeroAula, obterTituloAula, escapeHtml } from "../utils/domHelpers.js";
 import { enviarFilaEdicaoAulaData } from "../services/api.js";
-import { montarConteudoInternoDaAula } from "../components/LessonAccordion.js";
+import { montarConteudoInternoDaAula, hidratarArtefatosAula, desmontarArtefatosAula } from "../components/LessonAccordion.js";
 import { observarMidiasLazy } from "../utils/performance.js";
 import { revogarBlobsDaAula } from "../services/mediaResolver.js";
 import { isAdminAutenticado } from "../services/auth.js";
@@ -352,6 +352,7 @@ export function abrirModalVisualizacaoAula(discId, aulaId) {
   if (corpoEl) {
     corpoEl.innerHTML = montarConteudoInternoDaAula(disc, aula);
     observarMidiasLazy(corpoEl);
+    hidratarArtefatosAula(corpoEl, aula);
   }
 
   if (modal) {
@@ -372,6 +373,7 @@ export function fecharModalVisualizacaoAula() {
   }
   const aula = store.getState().aulaModalDataAula;
   if (aula) {
+    desmontarArtefatosAula(aula.id);
     revogarBlobsDaAula(aula.id);
   }
 }

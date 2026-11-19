@@ -52,7 +52,7 @@ if sys.platform == "win32":
 # ==============================================================================
 # ⚙️ CONFIGURAÇÕES FIXAS DO WORKSPACE
 # ==============================================================================
-FIREBASE_URL = "https://study-os-fcc4a-default-rtdb.firebaseio.com"
+FIREBASE_URL = "https://study-os-beta-default-rtdb.firebaseio.com"
 
 # IDs das bases de dados no Notion
 ID_DATABASE_CURSOS = "11d65e23-a26e-4be3-941e-4ce7681342ac"

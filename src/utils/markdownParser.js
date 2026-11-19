@@ -3,6 +3,8 @@
  * Otimizado para alta performance e zero reprocessamento de aulas longas.
  */
 
+import { classificarArquivoArtefato } from "./artifactsClassifier.js";
+
 class LRUCache {
   constructor(max = 200) {
     this.max = max;
@@ -53,7 +55,7 @@ export function desescaparMarkdown(mdCru) {
   let t = String(mdCru).replace(/&#x20;/g, " ");
   if (/\\#/.test(t) || /\\\*\\\*/.test(t)) {
     t = t
-      .replace(/^(\s*)\\(#{1,6})\s+/gm, "$1$2 ")
+      .replace(/^(\s*)((?:\\#){1,6})\s+/gm, (_, esp, hashes) => `${esp}${hashes.replace(/\\#/g, "#")} `)
       .replace(/\\\*\\\*/g, "**")
       .replace(/^(\s*)\\([*+-])\s+/gm, "$1$2 ")
       .replace(/^(\s*\d+)\\\.\s+/gm, "$1. ")
@@ -284,6 +286,12 @@ export function encontrarArquivoFisicoFuzzy(nomeBuscado, arquivosFisicos = []) {
  * @returns {boolean}
  */
 export function ehArquivoMaterialBrutoPermitido(ext = "", arqDb = null) {
+  // Regra Crítica Nº 1: mapa-mental.json, flashcards.md, quiz.md e relatorio.md
+  // pertencem às Camadas 6-9 e NUNCA devem entrar no Cofre Admin (Camada 11)
+  if (arqDb && classificarArquivoArtefato(arqDb).ehNovoArtefato) {
+    return false;
+  }
+
   const e = String(ext || "").toLowerCase().replace(/^\./, "");
   
   // Proibição expressa de mídias de aula e imagens
@@ -442,7 +450,8 @@ export function extrairBloco15Arquivos(mdCru, arquivosFisicos = []) {
     const ext = extMatch ? extMatch[1].toLowerCase() : (arqDb?.tipo || (nomeFinal.includes(".") ? nomeFinal.split(".").pop().toLowerCase() : ""));
 
     // FILTRO ESTRITO: Apenas PDF COM OCR, TXTs e CÓDIGOS FONTE / DADOS!
-    if (!ehArquivoMaterialBrutoPermitido(ext, arqDb)) {
+    // E nunca incluir os 4 novos artefatos (mapa-mental.json, flashcards.md, quiz.md, relatorio.md)
+    if (!ehArquivoMaterialBrutoPermitido(ext, arqDb || { nome: nomeFinal })) {
       return;
     }
 

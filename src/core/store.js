@@ -10,9 +10,11 @@ import {
   extrairIconeENome,
   parsearTagsDisciplina,
   normalizarStatusDisciplina,
-  normalizarProfessor
+  normalizarProfessor,
+  extrairTituloH1DeMarkdown
 } from "../utils/domHelpers.js";
 import { obterEdicoesMdCache } from "../services/storage.js";
+import { separarArtefatosDaAula } from "../utils/artifactsClassifier.js";
 
 class Store {
   constructor() {
@@ -145,6 +147,11 @@ export function converterArquivoNode(arqNode) {
 
   const driveId = String(arqNode.id || arqNode.driveId || "").trim();
   const textoEmbutido = arqNode.conteudoTexto || arqNode.conteudo || arqNode.texto || arqNode.markdown || null;
+  const h1Bruto = !arqNode.artifactRole && textoEmbutido ? extrairTituloH1DeMarkdown(textoEmbutido) : "";
+  const tituloH1 = String(
+    arqNode.tituloH1 ||
+    (h1Bruto && h1Bruto.length <= 240 ? h1Bruto : "")
+  ).trim();
   const temOCR = arqNode.temOCR !== undefined ? Boolean(arqNode.temOCR) : true;
   const statusOCR = arqNode.statusOCR || (temOCR ? "com_ocr" : "sem_ocr");
 
@@ -155,10 +162,39 @@ export function converterArquivoNode(arqNode) {
     tipo: ext,
     mimeType: arqNode.mimeType || "",
     local: arqNode.local || "",
+    tituloH1,
     conteudoTexto: textoEmbutido,
+    conteudoJson: arqNode.conteudoJson ?? null,
+    artifactRole: arqNode.artifactRole || "",
     temOCR,
     statusOCR,
     caracteresOCR: arqNode.caracteresOCR ?? null
+  };
+}
+
+function normalizarMapaArtefatosAula(rawAula, arquivosConvertidos) {
+  const separados = separarArtefatosDaAula(arquivosConvertidos);
+  const rawArtifacts = (rawAula && typeof rawAula.artifacts === "object" && rawAula.artifacts) || {};
+  const artifacts = {};
+
+  for (const role of ["mindmap", "flashcards", "quiz", "relatorio"]) {
+    const bruto = rawArtifacts[role];
+    if (bruto && typeof bruto === "object" && (bruto.nome || bruto.local || bruto.conteudoTexto || bruto.conteudoJson || bruto.id)) {
+      artifacts[role] = converterArquivoNode({ ...bruto, artifactRole: role });
+    } else if (typeof bruto === "string" && bruto.trim()) {
+      artifacts[role] = bruto.trim();
+    } else if (separados.artifacts[role]) {
+      artifacts[role] = separados.artifacts[role];
+    }
+  }
+
+  return {
+    arquivosLimpos: separados.arquivosTradicionais,
+    artifacts,
+    mindmapUrl: String(rawAula?.mindmapUrl || artifacts.mindmap?.local || (typeof artifacts.mindmap === "string" ? artifacts.mindmap : "") || "").trim(),
+    flashcardsUrl: String(rawAula?.flashcardsUrl || artifacts.flashcards?.local || (typeof artifacts.flashcards === "string" ? artifacts.flashcards : "") || "").trim(),
+    quizUrl: String(rawAula?.quizUrl || artifacts.quiz?.local || (typeof artifacts.quiz === "string" ? artifacts.quiz : "") || "").trim(),
+    relatorioUrl: String(rawAula?.relatorioUrl || artifacts.relatorio?.local || (typeof artifacts.relatorio === "string" ? artifacts.relatorio : "") || "").trim()
   };
 }
 
@@ -197,6 +233,15 @@ export function converterDisciplinaNode(discNode, semestreNome) {
     if (ehPasta) {
       const arqsCru = item.filhos || item.arquivos || [];
       const arquivosConvertidos = coletarArquivosRecursivo(arqsCru);
+      const {
+        arquivosLimpos,
+        artifacts,
+        mindmapUrl,
+        flashcardsUrl,
+        quizUrl,
+        relatorioUrl
+      } = normalizarMapaArtefatosAula(item, arquivosConvertidos);
+
       const linkNotebook =
         item.linkNotebookLLM ??
         item.linkNotebookLM ??
@@ -208,6 +253,7 @@ export function converterDisciplinaNode(discNode, semestreNome) {
 
       aulas.push({
         id: slugify(`${semestreNome}-${nomeLimpo}-${item.nome}`),
+        ...(item.conteudoId ? { conteudoId: String(item.conteudoId).trim() } : {}),
         driveId: driveIdFinal,
         linkDrive: String(linkDrive || "").trim(),
         nome: item.nome || "Aula",
@@ -216,7 +262,12 @@ export function converterDisciplinaNode(discNode, semestreNome) {
         data_aula: item.data_aula || "",
         presenca: item.presenca ?? null,
         revisao: Boolean(item.revisao || item.revisao_aula),
-        arquivos: arquivosConvertidos
+        arquivos: arquivosLimpos,
+        artifacts,
+        mindmapUrl,
+        flashcardsUrl,
+        quizUrl,
+        relatorioUrl
       });
     } else {
       arquivosSoltos.push(converterArquivoNode(item));
@@ -283,6 +334,13 @@ export function normalizarDb(raw) {
           if (!a.driveId && a.linkDrive) {
             a.driveId = extrairDriveIdDeLink(a.linkDrive);
           }
+          const normArts = normalizarMapaArtefatosAula(a, Array.isArray(a.arquivos) ? a.arquivos : []);
+          a.arquivos = normArts.arquivosLimpos;
+          a.artifacts = normArts.artifacts;
+          a.mindmapUrl = normArts.mindmapUrl;
+          a.flashcardsUrl = normArts.flashcardsUrl;
+          a.quizUrl = normArts.quizUrl;
+          a.relatorioUrl = normArts.relatorioUrl;
         });
       });
     });
@@ -311,6 +369,7 @@ export function normalizarDb(raw) {
       usuario: raw.usuario || "Renan",
       curso: raw.curso || "Ciência da Computação",
       diretorioRaiz: raw.local || "G:\\Meu Drive\\CienciaComputacao",
+      atualizado_em: raw.atualizado_em || 0,
       semestres
     };
   }

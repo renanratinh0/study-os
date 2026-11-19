@@ -139,6 +139,9 @@ export async function autenticarAdmin(senhaDigitada, lembrarNavegador = false) {
       localStorage.setItem(STORAGE_ADMIN_KEY, "true");
     }
     atualizarUiModoAdmin();
+    if (typeof window !== "undefined" && typeof window.StudyOS?.sincronizarStudioAposLogin === "function") {
+      window.StudyOS.sincronizarStudioAposLogin();
+    }
     if (typeof window !== "undefined" && typeof window.StudyOS?.recarregarVisaoAtual === "function") {
       window.StudyOS.recarregarVisaoAtual();
     }
@@ -189,6 +192,17 @@ export function atualizarUiModoAdmin() {
           <span>🔒 Visitante</span>
         </button>
       `;
+    }
+  }
+
+  const studioTopbarEl = document.getElementById("studio-admin-topbar-controls");
+  if (studioTopbarEl) {
+    if (ehAdmin) {
+      studioTopbarEl.classList.remove("hidden");
+      studioTopbarEl.classList.add("flex");
+    } else {
+      studioTopbarEl.classList.add("hidden");
+      studioTopbarEl.classList.remove("flex");
     }
   }
 }

@@ -4,6 +4,8 @@
  * extração de metadados e notificações visuais (Toasts).
  */
 
+import { classificarArquivoArtefato } from "./artifactsClassifier.js";
+
 /**
  * Converte qualquer texto em um slug amigável para URLs e identificadores.
  * Remove acentos, caracteres especiais e converte espaços para hífens.
@@ -210,8 +212,22 @@ export function limparPrefixoAula(titulo) {
 }
 
 /**
+ * Extrai e limpa o título principal (H1) de um texto Markdown, removendo YAML frontmatter
+ * e prefixos redundantes ("Aula 01 - ", "Aula de Conclusão - ").
+ * @param {string} texto
+ * @returns {string}
+ */
+export function extrairTituloH1DeMarkdown(texto) {
+  if (!texto) return "";
+  const semYaml = String(texto).replace(/^\uFEFF?\s*---\r?\n[\s\S]*?\r?\n---\s*(?:\r?\n|$)/, "").trim();
+  const linhas = semYaml.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+  const linhaH1 = linhas.find(l => /^(?:\\?#)+/.test(l)) || linhas[0];
+  return linhaH1 ? limparPrefixoAula(linhaH1) : "";
+}
+
+/**
  * Obtém o melhor título H1 representativo para uma aula a partir do seu arquivo .md,
- * nome do arquivo ou nome da pasta.
+ * metadado `tituloH1`, nome do arquivo ou nome da pasta.
  * @param {object} aula
  * @param {Record<string, string>} [cacheMarkdownTexto={}]
  * @returns {string}
@@ -220,22 +236,23 @@ export function obterTituloAula(aula, cacheMarkdownTexto = {}) {
   if (!aula) return "Aula";
   const arquivos = aula.arquivos || [];
   const mdArq = arquivos.find(a => {
+    if (classificarArquivoArtefato(a).ehNovoArtefato) return false;
     const ext = String(a.tipo || (a.nome || "").split(".").pop() || "").toLowerCase();
     const cacheKey = a.id || a.local;
-    return ext === "md" || ext === "markdown" || a.conteudoTexto || cacheMarkdownTexto[cacheKey];
+    return ext === "md" || ext === "markdown" || /\.(md|markdown)$/i.test(String(a.nome || "")) || a.conteudoTexto || a.tituloH1 || cacheMarkdownTexto[cacheKey];
   });
 
   if (mdArq) {
     const cacheKey = mdArq.id || mdArq.local;
     const textoDisponivel = cacheMarkdownTexto[cacheKey] ?? mdArq.conteudoTexto;
     if (textoDisponivel) {
-      const semYaml = String(textoDisponivel).replace(/^\uFEFF?\s*---\r?\n[\s\S]*?\r?\n---\s*(?:\r?\n|$)/, "").trim();
-      const linhas = semYaml.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
-      const linhaH1 = linhas.find(l => /^(?:\\?#)+/.test(l)) || linhas[0];
-      if (linhaH1) {
-        const limpo = limparPrefixoAula(linhaH1);
-        if (limpo) return limpo;
-      }
+      const limpo = extrairTituloH1DeMarkdown(textoDisponivel);
+      if (limpo) return limpo;
+    }
+    const h1Salvo = mdArq.tituloH1 || aula.tituloH1;
+    if (h1Salvo) {
+      const limpoH1 = limparPrefixoAula(h1Salvo);
+      if (limpoH1) return limpoH1;
     }
     if (mdArq.nome) {
       const nomeSemExt = mdArq.nome
@@ -246,6 +263,9 @@ export function obterTituloAula(aula, cacheMarkdownTexto = {}) {
       const limpo = limparPrefixoAula(nomeSemExt);
       if (limpo) return limpo;
     }
+  } else if (aula.tituloH1) {
+    const limpoH1 = limparPrefixoAula(aula.tituloH1);
+    if (limpoH1) return limpoH1;
   }
 
   return limparPrefixoAula(aula.nome || "Aula");

@@ -10,6 +10,7 @@ import { resolverInventarioArquivosAula } from "../utils/markdownParser.js";
 import { resolverFontesMidia } from "../services/mediaResolver.js";
 import { escapeHtml, mostrarToast, obterTituloAula } from "../utils/domHelpers.js";
 import { isAdminAutenticado } from "../services/auth.js";
+import { classificarArquivoArtefato } from "../utils/artifactsClassifier.js";
 
 let _modalElemento = null;
 
@@ -55,9 +56,9 @@ export function abrirModalArquivosReferencias(discId, aulaId) {
     return;
   }
 
-  // Obtém o texto Markdown da aula a partir dos arquivos ou do cache de edição
+  // Obtém o texto Markdown da aula a partir dos arquivos ou do cache de edição (excluindo flashcards/quiz/relatorio)
   let textoMd = "";
-  const arqMd = (aula.arquivos || []).find(a => a.tipo === "md");
+  const arqMd = (aula.arquivos || []).find(a => a.tipo === "md" && !classificarArquivoArtefato(a).ehNovoArtefato);
   if (arqMd) {
     const cacheKey = arqMd.id || arqMd.local || arqMd.nome;
     textoMd = state.cacheMarkdownTexto[cacheKey] ?? arqMd.conteudoTexto ?? "";

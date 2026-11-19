@@ -16,7 +16,7 @@ if sys.platform == "win32":
 # ==============================================================================
 # ⚙️ CONFIGURAÇÃO
 # ==============================================================================
-FIREBASE_URL = "https://study-os-fcc4a-default-rtdb.firebaseio.com"
+FIREBASE_URL = "https://study-os-beta-default-rtdb.firebaseio.com"
 
 # Tenta obter o FIREBASE_SECRET a partir de variável de ambiente ou de notion_config.json
 FIREBASE_SECRET = os.environ.get("FIREBASE_SECRET", "")

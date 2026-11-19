@@ -20,8 +20,24 @@ import {
   ehTagRedundanteDePasta,
   ordenarTagsSemanticamente
 } from "./components/DisciplineCard.js";
-import { renderBarraSelectsMidiaAula, renderDisciplineLessons, aoAlternarToggleAula, montarConteudoInternoDaAula } from "./components/LessonAccordion.js";
-import { carregarDbLocal, carregarDbFirebase, enviarFilaEdicaoMd } from "./services/api.js";
+import {
+  renderBarraSelectsMidiaAula,
+  renderDisciplineLessons,
+  aoAlternarToggleAula,
+  montarConteudoInternoDaAula,
+  hidratarArtefatosAula,
+  desmontarArtefatosAula
+} from "./components/LessonAccordion.js";
+import { destroyAllNeuralMindmaps } from "./components/NeuralMindmapCanvas.js";
+import {
+  carregarDbLocal,
+  carregarDbFirebase,
+  carregarDbMetaFirebase,
+  enviarFilaEdicaoMd,
+  isAmbienteLocal,
+  ehDbMockup,
+  definirVersaoDbAtual
+} from "./services/api.js";
 import {
   salvarDbCache,
   obterDbCache,
@@ -48,6 +64,19 @@ import {
   isAdminAutenticado, 
   atualizarUiModoAdmin 
 } from "./services/auth.js";
+import {
+  dispararArtefatoStudio,
+  dispararTodosArtefatosDaAula,
+  dispararLoteStudio,
+  aprovarJobRevisaoStudio,
+  tentarNovamenteJobRevisaoStudio,
+  cancelarJobRevisaoStudio,
+  retomarFilaCotaStudio,
+  limparFilaStudioCompleta,
+  sincronizarFilaComWorker,
+  atualizarContadorStudioTopbarDOM,
+  iniciarMonitoramentoStudioBackground
+} from "./services/studioApi.js";
 
 // ==============================================================================
 // 🚀 DYNAMIC IMPORT LOADERS PARA MODAIS PESADOS (CODE SPLITTING / SRP ESTRITO)
@@ -59,7 +88,9 @@ export const Modals = {
   loadDisciplineMeta: () => import("./modals/DisciplineMetaModal.js"),
   loadDataAula: () => import("./modals/DataAulaModal.js"),
   loadImportReport: () => import("./modals/ImportReportModal.js"),
-  loadArquivosReferencias: () => import("./modals/ArquivosReferenciasModal.js")
+  loadArquivosReferencias: () => import("./modals/ArquivosReferenciasModal.js"),
+  loadRelatorio: () => import("./modals/RelatorioModal.js"),
+  loadStudioAdmin: () => import("./modals/StudioAdminModal.js")
 };
 
 // ==============================================================================
@@ -420,7 +451,8 @@ export function renderDisciplineView(slug) {
     return;
   }
 
-  // Prevenção de vazamento de memória: revoga blobs anteriores ao trocar de matéria
+  // Prevenção de vazamento de memória: revoga blobs e destrói canvas anteriores ao trocar de matéria
+  destroyAllNeuralMindmaps();
   revogarTodosBlobs();
   desconectarMediaObserver();
   store.getState().aulasAbertas.clear();
@@ -470,6 +502,18 @@ export function renderDisciplineView(slug) {
     }
   }
 
+  const btnBatchStudio = document.getElementById("btn-studio-batch-disc");
+  if (btnBatchStudio) {
+    if (isAdminAutenticado()) {
+      btnBatchStudio.classList.remove("hidden");
+      btnBatchStudio.classList.add("inline-flex");
+      btnBatchStudio.onclick = () => window.StudyOS?.abrirModalStudioLote(disc.id);
+    } else {
+      btnBatchStudio.classList.add("hidden");
+      btnBatchStudio.classList.remove("inline-flex");
+    }
+  }
+
   renderAtividadesDisciplina(disc);
   renderBarraSelectsMidiaAula(disc);
   renderDisciplineLessons(disc);
@@ -491,33 +535,152 @@ export function processarJsonImportado(rawJson, nomeArquivo = "db.json", exibirM
   router.resolve();
 }
 
+/**
+ * Mescla artefatos e arquivos recém-indexados de `localDb` (ex: `db.personal.json`)
+ * para dentro do banco vindo do Firebase quando ambos cobrem os mesmos semestres.
+ * Garante que artefatos locais apareçam imediatamente mesmo sem deploy recente de regras no Console.
+ * @param {object} baseDb
+ * @param {object} localDb
+ * @returns {object}
+ */
+export function mesclarArtefatosLocaisNoDb(baseDb, localDb) {
+  if (!baseDb || !localDb) return baseDb || localDb;
+
+  const contarGrupos = (db) => (Array.isArray(db?.filhos) ? db.filhos.length : (Array.isArray(db?.semestres) ? db.semestres.length : 0));
+  if (contarGrupos(localDb) < contarGrupos(baseDb)) {
+    return baseDb;
+  }
+
+  const normChave = (s) => String(s || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^\w\s/-]+/g, "").replace(/\s+/g, " ").trim().toLowerCase();
+  const normLocal = (s) => String(s || "").replace(/\\/g, "/").replace(/^\/+|\/+$/g, "").toLowerCase();
+
+  const mapaLocalPorCaminho = new Map();
+  const mapaLocalPorDiscAula = new Map();
+
+  const listarGrupos = (db) => (Array.isArray(db?.filhos) ? db.filhos : (Array.isArray(db?.semestres) ? db.semestres : []));
+  const listarDiscs = (sem) => (Array.isArray(sem?.filhos) ? sem.filhos : (Array.isArray(sem?.disciplinas) ? sem.disciplinas : []));
+  const listarAulas = (disc) => (Array.isArray(disc?.filhos) ? disc.filhos : (Array.isArray(disc?.aulas) ? disc.aulas : []));
+
+  listarGrupos(localDb).forEach(sem => {
+    listarDiscs(sem).forEach(disc => {
+      const discK = normChave(disc?.nome);
+      listarAulas(disc).forEach(aula => {
+        if (!aula || typeof aula !== "object") return;
+        const loc = normLocal(aula.local);
+        if (loc) mapaLocalPorCaminho.set(loc, aula);
+        const aulaK = normChave(aula.nome);
+        if (discK && aulaK) mapaLocalPorDiscAula.set(`${discK}::${aulaK}`, aula);
+      });
+    });
+  });
+
+  listarGrupos(baseDb).forEach(sem => {
+    listarDiscs(sem).forEach(disc => {
+      const discK = normChave(disc?.nome);
+      listarAulas(disc).forEach(aula => {
+        if (!aula || typeof aula !== "object") return;
+        const loc = normLocal(aula.local);
+        const aulaK = normChave(aula.nome);
+        const aulaLoc = (loc && mapaLocalPorCaminho.get(loc)) || mapaLocalPorDiscAula.get(`${discK}::${aulaK}`);
+        if (!aulaLoc) return;
+
+        if (aulaLoc.artifacts && typeof aulaLoc.artifacts === "object") {
+          aula.artifacts = { ...(aula.artifacts || {}), ...aulaLoc.artifacts };
+        }
+        for (const campoUrl of ["mindmapUrl", "flashcardsUrl", "quizUrl", "relatorioUrl"]) {
+          if (aulaLoc[campoUrl] && !aula[campoUrl]) {
+            aula[campoUrl] = aulaLoc[campoUrl];
+          }
+        }
+        const filhosLoc = Array.isArray(aulaLoc.filhos) ? aulaLoc.filhos : aulaLoc.arquivos;
+        const filhosBase = Array.isArray(aula.filhos) ? aula.filhos : aula.arquivos;
+        if (Array.isArray(filhosLoc) && Array.isArray(filhosBase)) {
+          const porNome = new Map(filhosBase.map((f, idx) => [String(f?.nome || "").toLowerCase(), idx]));
+          filhosLoc.forEach(fl => {
+            if (!fl || !fl.nome) return;
+            const chaveN = String(fl.nome).toLowerCase();
+            if (!porNome.has(chaveN)) {
+              filhosBase.push(fl);
+            } else if ((fl.conteudoTexto || fl.conteudoJson) && !filhosBase[porNome.get(chaveN)]?.conteudoTexto) {
+              filhosBase[porNome.get(chaveN)] = { ...filhosBase[porNome.get(chaveN)], ...fl };
+            }
+          });
+        }
+      });
+    });
+  });
+
+  return baseDb;
+}
+
 export async function inicializarApp() {
   atualizarUiModoAdmin();
-  const inputBase = document.getElementById("input-base-media-path");
+  atualizarContadorStudioTopbarDOM();
+  iniciarMonitoramentoStudioBackground();
+  const inputBase = typeof document !== "undefined" ? document.getElementById("input-base-media-path") : null;
   if (inputBase) inputBase.value = obterBaseMediaPath();
 
-  // 1. Prioriza o banco real sincronizado no Firebase Realtime Database (Produção / GitHub Pages)
-  const fbDb = await carregarDbFirebase();
-  if (fbDb) {
+  // 1. Ambiente Local (localhost / 127.0.0.1): carrega exclusivamente db.personal.json (sem mockup)
+  //    e só baixa /db_json se /db_meta na nuvem for mais recente.
+  if (isAmbienteLocal()) {
+    const localDb = await carregarDbLocal({ apenasPessoal: true });
+    if (localDb && !ehDbMockup(localDb)) {
+      const tsLocal = Number(localDb.atualizado_em || 0);
+      definirVersaoDbAtual(tsLocal);
+      processarJsonImportado(localDb, "db.personal.json", false);
+      carregarDbMetaFirebase()
+        .then(fbMeta => {
+          if (fbMeta && Number(fbMeta.atualizado_em || 0) > tsLocal) {
+            return carregarDbFirebase({ forcarDownload: true }).then(fbDb => {
+              if (fbDb && !ehDbMockup(fbDb)) {
+                const tsFinal = Number(fbDb.atualizado_em || fbMeta.atualizado_em || 0);
+                if (!fbDb.atualizado_em && tsFinal > 0) fbDb.atualizado_em = tsFinal;
+                definirVersaoDbAtual(tsFinal);
+                const dbMesclado = mesclarArtefatosLocaisNoDb(fbDb, localDb);
+                processarJsonImportado(dbMesclado, "db.json (Nuvem Firebase)", false);
+              }
+            });
+          }
+        })
+        .catch(() => {});
+      return;
+    }
+  }
+
+  // 2. Ambiente Online (GitHub Pages — Somente Dados Reais do Firebase, Zero Mockup):
+  //    Compara o cache real do navegador com /db_meta.json (~100 bytes) antes de baixar /db_json.json.
+  const cachedRaw = obterDbCache();
+  const cachedDb = cachedRaw && !ehDbMockup(cachedRaw) ? cachedRaw : null;
+  const tsCache = Number(cachedDb?.atualizado_em || 0);
+
+  const fbMeta = await carregarDbMetaFirebase();
+  const tsRemoto = Number(fbMeta?.atualizado_em || 0);
+
+  if (cachedDb && tsCache > 0 && (!tsRemoto || tsRemoto <= tsCache)) {
+    definirVersaoDbAtual(tsCache);
+    processarJsonImportado(cachedDb, "db.json (Cache Atualizado)", false);
+    return;
+  }
+
+  const fbDb = await carregarDbFirebase({ forcarDownload: true });
+  if (fbDb && !ehDbMockup(fbDb)) {
+    const tsFinal = Number(fbDb.atualizado_em || tsRemoto || 0);
+    if (!fbDb.atualizado_em && tsFinal > 0) {
+      fbDb.atualizado_em = tsFinal;
+    }
+    definirVersaoDbAtual(tsFinal);
     processarJsonImportado(fbDb, "db.json (Nuvem Firebase)", false);
     return;
   }
 
-  // 2. Fallback para o arquivo local db.json (Template / Offline)
-  const localDb = await carregarDbLocal();
-  if (localDb) {
-    processarJsonImportado(localDb, "db.json", false);
-    return;
-  }
-
-  // 3. Fallback para cache local no navegador
-  const cachedDb = obterDbCache();
+  // 3. Fallback offline seguro: mantém o último banco real salvo em cache (sem voltar para mockup)
   if (cachedDb) {
-    processarJsonImportado(cachedDb, "db.json (Cache)", false);
+    definirVersaoDbAtual(tsCache);
+    processarJsonImportado(cachedDb, "db.json (Cache Offline)", false);
     return;
   }
 
-  // Fallback banco vazio
+  // Sem conexão e sem cache real prévio: estado vazio (nunca injeta mockup em produção)
   store.setState({ db: normalizarDb(null) });
   router.resolve();
 }
@@ -635,6 +798,114 @@ export const StudyOS = {
   fecharModalArquivosReferencias: () => {
     Modals.loadArquivosReferencias().then(m => m.fecharModalArquivosReferencias());
   },
+  abrirModalRelatorio: (discIdOrLessonId, lessonId) => {
+    Modals.loadRelatorio().then(m => m.abrirModalRelatorio(discIdOrLessonId, lessonId));
+  },
+  fecharModalRelatorio: () => {
+    Modals.loadRelatorio().then(m => m.fecharModalRelatorio());
+  },
+
+  // Studio Worker (Fire-and-Forget, Lote, Fontes & Painel de Revisão Diff A/B)
+  sincronizarStudioAposLogin: () => sincronizarFilaComWorker(),
+  dispararArtefatoStudio: (discId, aulaId, tipoArtefato, acao, btnEl = null) => {
+    exigirAdmin("Disparar Geração no Studio Worker", () => {
+      dispararArtefatoStudio({ discId, aulaId, tipoArtefato, acao, btnEl });
+    });
+  },
+  dispararTodosArtefatosDaAula: (discId, aulaId, apenasFaltantes = false, btnEl = null) => {
+    exigirAdmin("Enfileirar Todos os Artefatos da Aula", () => {
+      dispararTodosArtefatosDaAula({ discId, aulaId, apenasFaltantes, btnEl });
+    });
+  },
+  dispararLoteStudio: (opcoes) => {
+    exigirAdmin("Disparo em Lote no Studio Worker", () => {
+      dispararLoteStudio(opcoes);
+    });
+  },
+  abrirModalStudioRevisao: () => {
+    exigirAdmin("Painel de Aprovação Simplificado (Diff A/B)", () => {
+      Modals.loadStudioAdmin().then(m => m.abrirModalStudioRevisao());
+    });
+  },
+  fecharModalStudioRevisao: () => {
+    Modals.loadStudioAdmin().then(m => m.fecharModalStudioRevisao());
+  },
+  aprovarJobRevisaoStudio: (jobId) => {
+    exigirAdmin("Aprovar Artefato em Revisão", async () => {
+      await aprovarJobRevisaoStudio(jobId);
+      const m = await Modals.loadStudioAdmin();
+      m.renderCorpoModalStudioRevisao();
+      router.resolve();
+      mostrarToast("Artefato Aprovado! ✅", "Arquivo oficial salvo na aula e atualizado no db.json.", "success");
+    });
+  },
+  tentarNovamenteJobRevisaoStudio: (jobId) => {
+    exigirAdmin("Regerar Artefato em Revisão", async () => {
+      await tentarNovamenteJobRevisaoStudio(jobId);
+      const m = await Modals.loadStudioAdmin();
+      m.renderCorpoModalStudioRevisao();
+      router.resolve();
+      mostrarToast("Devolvido para a Fila 🔄", "O arquivo do staging foi apagado e será regerado.", "info");
+    });
+  },
+  cancelarJobRevisaoStudio: (jobId) => {
+    exigirAdmin("Cancelar Solicitação em Revisão", async () => {
+      await cancelarJobRevisaoStudio(jobId);
+      const m = await Modals.loadStudioAdmin();
+      m.renderCorpoModalStudioRevisao();
+      router.resolve();
+      mostrarToast("Solicitação Cancelada ✖", "O arquivo do staging foi excluído e o antigo foi mantido.", "info");
+    });
+  },
+  retomarFilaCotaStudio: () => {
+    exigirAdmin("Retomar Fila do Studio Worker", async () => {
+      const res = await retomarFilaCotaStudio();
+      const m = await Modals.loadStudioAdmin();
+      m.renderCorpoModalStudioRevisao();
+      router.resolve();
+      mostrarToast("Cota Retomada ▶️", `${res.retomados || 0} item(ns) voltaram para a fila ativa.`, "success");
+    });
+  },
+  limparFilaStudioCompleta: () => {
+    exigirAdmin("Limpar Fila do Studio Worker", async () => {
+      const res = await limparFilaStudioCompleta();
+      const m = await Modals.loadStudioAdmin();
+      m.renderCorpoModalStudioRevisao();
+      router.resolve();
+      if (res?.firebase_limpo) {
+        mostrarToast(
+          "Fila 100% Limpa 🗑️",
+          `Fila local e Firebase (/fila_studio) zerados (${res.removidos_firebase || 0} apagado(s) no banco, 0 restantes).`,
+          "success"
+        );
+      } else {
+        mostrarToast(
+          "Fila Local Limpa ⚠️",
+          `Fila local zerada, mas não foi possível confirmar a remoção total no Firebase (restantes: ${res?.restantes_firebase ?? "?"}).`,
+          "warning"
+        );
+      }
+    });
+  },
+  abrirModalStudioLote: (discId = "") => {
+    exigirAdmin("Gerar / Regerar Artefatos em Lote", () => {
+      Modals.loadStudioAdmin().then(m => m.abrirModalStudioLote(discId));
+    });
+  },
+  fecharModalStudioLote: () => {
+    Modals.loadStudioAdmin().then(m => m.fecharModalStudioLote());
+  },
+  confirmarDisparoStudioLote: () => {
+    Modals.loadStudioAdmin().then(m => m.confirmarDisparoStudioLote());
+  },
+  abrirModalFontesNotebook: (discId, aulaId) => {
+    exigirAdmin("Relatório de Fontes do Caderno NotebookLM", () => {
+      Modals.loadStudioAdmin().then(m => m.abrirModalFontesNotebook(discId, aulaId));
+    });
+  },
+  fecharModalFontesNotebook: () => {
+    Modals.loadStudioAdmin().then(m => m.fecharModalFontesNotebook());
+  },
 
   // Autenticação Admin
   abrirModalSenhaAdmin,
@@ -721,9 +992,11 @@ export const StudyOS = {
           const aula = (disc.aulas || []).find(a => a.id === aulaId);
           const bodyEl = document.getElementById(`lesson-body-${aulaId}`);
           if (aula && bodyEl) {
+            desmontarArtefatosAula(aulaId);
             revogarBlobsDaAula(aulaId);
             bodyEl.innerHTML = montarConteudoInternoDaAula(disc, aula);
             observarMidiasLazy(bodyEl);
+            hidratarArtefatosAula(bodyEl, aula, disc);
           }
         });
       }
@@ -743,9 +1016,11 @@ export const StudyOS = {
           const aula = (disc.aulas || []).find(a => a.id === aulaId);
           const bodyEl = document.getElementById(`lesson-body-${aulaId}`);
           if (aula && bodyEl) {
+            desmontarArtefatosAula(aulaId);
             revogarBlobsDaAula(aulaId);
             bodyEl.innerHTML = montarConteudoInternoDaAula(disc, aula);
             observarMidiasLazy(bodyEl);
+            hidratarArtefatosAula(bodyEl, aula, disc);
           }
         });
       }
@@ -991,6 +1266,8 @@ if (typeof window !== "undefined") {
   window.salvarEdicaoMd = StudyOS.salvarEdicaoMd;
   window.alternarTema = StudyOS.alternarTema;
   window.definirTema = StudyOS.definirTema;
+  window.abrirModalRelatorio = StudyOS.abrirModalRelatorio;
+  window.fecharModalRelatorio = StudyOS.fecharModalRelatorio;
 }
 
 // ==============================================================================
@@ -1025,6 +1302,18 @@ if (typeof document !== "undefined") {
     aplicarTemaNoDocumento(obterTemaPreferido());
     router.init();
 
+  // Delegação global para abrir Relatório Técnico (Camada 9) via data-action="open-relatorio-modal"
+  document.addEventListener("click", (e) => {
+    const btnRel = e.target?.closest?.('[data-action="open-relatorio-modal"]');
+    if (btnRel) {
+      const lessonId = btnRel.getAttribute("data-lesson-id") || "";
+      const discId = btnRel.getAttribute("data-disc-id") || "";
+      if (lessonId) {
+        window.StudyOS?.abrirModalRelatorio?.(discId, lessonId);
+      }
+    }
+  });
+
   // Botões de colapsar / expandir todas as aulas
   document.getElementById("btn-open-all-lessons-filtered")?.addEventListener("click", () => {
     document.querySelectorAll("details[id^='lesson-details-']").forEach(el => {
@@ -1036,6 +1325,7 @@ if (typeof document !== "undefined") {
     document.querySelectorAll("details[id^='lesson-details-']").forEach(el => {
       el.open = false;
     });
+    destroyAllNeuralMindmaps();
     store.getState().aulasAbertas.clear();
     revogarTodosBlobs();
   });
@@ -1188,6 +1478,10 @@ if (typeof document !== "undefined") {
       window.StudyOS.fecharPlaylistImersiva();
       window.StudyOS.fecharModalRelatorioImportacao();
       window.StudyOS.fecharModalArquivosReferencias();
+      window.StudyOS.fecharModalRelatorio();
+      window.StudyOS.fecharModalStudioRevisao?.();
+      window.StudyOS.fecharModalStudioLote?.();
+      window.StudyOS.fecharModalFontesNotebook?.();
       return;
     }
 

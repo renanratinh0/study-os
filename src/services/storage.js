@@ -6,28 +6,74 @@
 
 import { STORAGE_KEYS, DEFAULT_MEDIA_PATH, DEFAULT_THEME } from "../core/constants.js";
 
-// Memória volátil para ambientes sem localStorage (ex: Node.js tests)
+// Memória volátil para ambientes sem localStorage (ex: Node.js tests) e bancos > quota
 let _memTheme = DEFAULT_THEME;
+let _memDbCache = null;
+let _memFlashcardsSrs = {};
+let _memQuizProgress = {};
+
+const MAX_LOCALSTORAGE_DB_CHARS = 3_800_000;
+
+function compactarNoCache(valor) {
+  if (Array.isArray(valor)) {
+    return valor.map(compactarNoCache);
+  }
+  if (!valor || typeof valor !== "object") {
+    return valor;
+  }
+  const out = {};
+  for (const [k, v] of Object.entries(valor)) {
+    if (k === "conteudoJson") continue;
+    if (k === "conteudoTexto" && typeof v === "string" && v.length > 512) continue;
+    out[k] = compactarNoCache(v);
+  }
+  return out;
+}
 
 /**
- * Salva o banco de dados completo no cache do navegador.
+ * Gera uma cópia compactada do banco omitindo conteúdos inline pesados (> 512 chars)
+ * para caber na cota do localStorage sem gerar QuotaExceededError.
+ * @param {object} dbJson
+ * @returns {object}
+ */
+export function compactarDbParaCacheLeve(dbJson) {
+  return compactarNoCache(dbJson);
+}
+
+/**
+ * Salva o banco de dados em memória e no cache leve do navegador sem estourar cota.
  * @param {object} dbJson
  */
 export function salvarDbCache(dbJson) {
+  _memDbCache = dbJson || null;
+  if (typeof localStorage === "undefined" || !dbJson) return;
+
   try {
-    if (typeof localStorage !== "undefined") {
-      localStorage.setItem(STORAGE_KEYS.DB_CACHE, JSON.stringify(dbJson));
+    const serializado = JSON.stringify(dbJson);
+    if (serializado.length <= MAX_LOCALSTORAGE_DB_CHARS) {
+      localStorage.setItem(STORAGE_KEYS.DB_CACHE, serializado);
+      return;
     }
-  } catch (err) {
-    console.warn("[Storage] Falha ao salvar DB em cache:", err);
+  } catch (_) {
+    // Continua para tentativa compactada em caso de QuotaExceededError
+  }
+
+  try {
+    const leve = JSON.stringify(compactarDbParaCacheLeve(dbJson));
+    localStorage.setItem(STORAGE_KEYS.DB_CACHE, leve);
+  } catch (_) {
+    try {
+      localStorage.removeItem(STORAGE_KEYS.DB_CACHE);
+    } catch (_) { }
   }
 }
 
 /**
- * Recupera o banco de dados salvo em cache no navegador.
+ * Recupera o banco de dados salvo em cache em memória ou no navegador.
  * @returns {object | null}
  */
 export function obterDbCache() {
+  if (_memDbCache) return _memDbCache;
   try {
     if (typeof localStorage !== "undefined") {
       const salvo = localStorage.getItem(STORAGE_KEYS.DB_CACHE);
@@ -43,11 +89,12 @@ export function obterDbCache() {
  * Remove o banco salvo do cache.
  */
 export function limparDbCache() {
+  _memDbCache = null;
   try {
     if (typeof localStorage !== "undefined") {
       localStorage.removeItem(STORAGE_KEYS.DB_CACHE);
     }
-  } catch (_) {}
+  } catch (_) { }
 }
 
 /**
@@ -77,7 +124,7 @@ export function obterEdicoesMdCache() {
       const salvo = localStorage.getItem(STORAGE_KEYS.MD_EDITS_CACHE);
       return salvo ? JSON.parse(salvo) : {};
     }
-  } catch (_) {}
+  } catch (_) { }
   return {};
 }
 
@@ -89,7 +136,7 @@ export function limparEdicoesMdCache() {
     if (typeof localStorage !== "undefined") {
       localStorage.removeItem(STORAGE_KEYS.MD_EDITS_CACHE);
     }
-  } catch (_) {}
+  } catch (_) { }
 }
 
 /**
@@ -101,7 +148,7 @@ export function obterBaseMediaPath() {
     if (typeof localStorage !== "undefined") {
       return localStorage.getItem(STORAGE_KEYS.BASE_MEDIA_PATH) || DEFAULT_MEDIA_PATH;
     }
-  } catch (_) {}
+  } catch (_) { }
   return DEFAULT_MEDIA_PATH;
 }
 
@@ -114,7 +161,7 @@ export function salvarBaseMediaPath(path) {
     if (typeof localStorage !== "undefined") {
       localStorage.setItem(STORAGE_KEYS.BASE_MEDIA_PATH, String(path || "").trim() || DEFAULT_MEDIA_PATH);
     }
-  } catch (_) {}
+  } catch (_) { }
 }
 
 /**
@@ -131,7 +178,7 @@ export function obterTemaPreferido() {
       }
       return DEFAULT_THEME;
     }
-  } catch (_) {}
+  } catch (_) { }
   return _memTheme === "light" ? "light" : DEFAULT_THEME;
 }
 
@@ -147,7 +194,7 @@ export function salvarTemaPreferido(tema) {
     if (typeof localStorage !== "undefined") {
       localStorage.setItem(STORAGE_KEYS.THEME, temaNormalizado);
     }
-  } catch (_) {}
+  } catch (_) { }
   return temaNormalizado;
 }
 
@@ -197,4 +244,128 @@ export function alternarTema() {
   const proximo = atual === "dark" ? "light" : "dark";
   salvarTemaPreferido(proximo);
   return aplicarTemaNoDocumento(proximo);
+}
+
+// ==============================================================================
+// 🃏 PERSISTÊNCIA DE PROGRESSO: FLASHCARDS (SRS) & QUIZ SIMULADOR (CAMADAS 7 & 8)
+// ==============================================================================
+
+function lerMapaStorageSeguro(key, fallbackMem) {
+  try {
+    if (typeof localStorage !== "undefined") {
+      const salvo = localStorage.getItem(key);
+      return salvo ? JSON.parse(salvo) : {};
+    }
+  } catch (err) {
+    console.warn(`[Storage] Falha ao ler ${key}:`, err);
+  }
+  return { ...fallbackMem };
+}
+
+function gravarMapaStorageSeguro(key, dados) {
+  try {
+    if (typeof localStorage !== "undefined") {
+      localStorage.setItem(key, JSON.stringify(dados));
+    }
+  } catch (err) {
+    console.warn(`[Storage] Falha ao gravar ${key}:`, err);
+  }
+}
+
+/**
+ * Retorna o progresso SRS salvo dos flashcards para uma aula específica.
+ * @param {string} lessonId
+ * @returns {Record<string, { rating: 'hard' | 'medium' | 'easy', updatedAt: number, reviews: number }>}
+ */
+export function obterProgressoFlashcards(lessonId) {
+  if (!lessonId) return {};
+  const todos = lerMapaStorageSeguro(STORAGE_KEYS.FLASHCARDS_SRS, _memFlashcardsSrs);
+  return { ...(todos[lessonId] || {}) };
+}
+
+/**
+ * Salva a avaliação SRS de um card específico vinculada ao ID da aula.
+ * @param {string} lessonId
+ * @param {string} cardId
+ * @param {'hard' | 'medium' | 'easy'} rating
+ * @returns {Record<string, { rating: 'hard' | 'medium' | 'easy', updatedAt: number, reviews: number }>}
+ */
+export function salvarAvaliacaoFlashcard(lessonId, cardId, rating) {
+  if (!lessonId || !cardId) return {};
+  const validRating = ["hard", "medium", "easy"].includes(rating) ? rating : "medium";
+  const todos = lerMapaStorageSeguro(STORAGE_KEYS.FLASHCARDS_SRS, _memFlashcardsSrs);
+  const aulaAtual = { ...(todos[lessonId] || {}) };
+  const anterior = aulaAtual[cardId] || { reviews: 0 };
+
+  aulaAtual[cardId] = {
+    rating: validRating,
+    updatedAt: Date.now(),
+    reviews: (Number(anterior.reviews) || 0) + 1
+  };
+
+  todos[lessonId] = aulaAtual;
+  _memFlashcardsSrs = todos;
+  gravarMapaStorageSeguro(STORAGE_KEYS.FLASHCARDS_SRS, todos);
+  return { ...aulaAtual };
+}
+
+/**
+ * Limpa todo o histórico SRS dos flashcards de uma aula.
+ * @param {string} lessonId
+ */
+export function limparProgressoFlashcards(lessonId) {
+  if (!lessonId) return;
+  const todos = lerMapaStorageSeguro(STORAGE_KEYS.FLASHCARDS_SRS, _memFlashcardsSrs);
+  delete todos[lessonId];
+  _memFlashcardsSrs = todos;
+  gravarMapaStorageSeguro(STORAGE_KEYS.FLASHCARDS_SRS, todos);
+}
+
+/**
+ * Retorna o progresso e placar do Quiz salvo para uma aula específica.
+ * @param {string} lessonId
+ * @returns {{ answers: Record<string, { selectedIndex: number, isCorrect: boolean }>, score: number, total: number, updatedAt: number }}
+ */
+export function obterProgressoQuiz(lessonId) {
+  const vazio = { answers: {}, score: 0, total: 0, updatedAt: 0 };
+  if (!lessonId) return vazio;
+  const todos = lerMapaStorageSeguro(STORAGE_KEYS.QUIZ_PROGRESS, _memQuizProgress);
+  const salvo = todos[lessonId];
+  if (!salvo || typeof salvo !== "object") return vazio;
+  return {
+    answers: { ...(salvo.answers || {}) },
+    score: Number(salvo.score) || 0,
+    total: Number(salvo.total) || 0,
+    updatedAt: Number(salvo.updatedAt) || 0
+  };
+}
+
+/**
+ * Salva as respostas e o placar de acertos do Quiz de uma aula.
+ * @param {string} lessonId
+ * @param {{ answers: Record<string, { selectedIndex: number, isCorrect: boolean }>, score: number, total: number }} progresso
+ */
+export function salvarProgressoQuiz(lessonId, progresso) {
+  if (!lessonId || !progresso) return;
+  const todos = lerMapaStorageSeguro(STORAGE_KEYS.QUIZ_PROGRESS, _memQuizProgress);
+  todos[lessonId] = {
+    answers: { ...(progresso.answers || {}) },
+    score: Number(progresso.score) || 0,
+    total: Number(progresso.total) || 0,
+    updatedAt: Date.now()
+  };
+  _memQuizProgress = todos;
+  gravarMapaStorageSeguro(STORAGE_KEYS.QUIZ_PROGRESS, todos);
+}
+
+/**
+ * Reinicia o progresso e placar do Quiz de uma aula.
+ * @param {string} lessonId
+ */
+export function limparProgressoQuiz(lessonId) {
+  if (!lessonId) return;
+  const todos = lerMapaStorageSeguro(STORAGE_KEYS.QUIZ_PROGRESS, _memQuizProgress);
+  delete todos[lessonId];
+  _memQuizProgress = todos;
+  gravarMapaStorageSeguro(STORAGE_KEYS.QUIZ_PROGRESS, todos);
 }

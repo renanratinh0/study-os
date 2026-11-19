@@ -42,6 +42,49 @@
                 }
             } catch (_) {}
         })();
+        // Impede que atualizações em db.json/db.personal.json disparem reload automático (F5) pelo Live Server
+        (function () {
+            try {
+                var NativeWS = window.WebSocket;
+                if (typeof NativeWS !== 'function') return;
+                window.WebSocket = function (url, protocols) {
+                    var ws = protocols !== undefined ? new NativeWS(url, protocols) : new NativeWS(url);
+                    var isLiveServer = typeof url === 'string' && /\/ws\b/.test(url);
+                    if (!isLiveServer) return ws;
+                    var protoDesc = Object.getOwnPropertyDescriptor(NativeWS.prototype, 'onmessage');
+                    var _onmessage = null;
+                    Object.defineProperty(ws, 'onmessage', {
+                        configurable: true,
+                        get: function () { return _onmessage; },
+                        set: function (fn) {
+                            _onmessage = function (ev) {
+                                if (ev && ev.data === 'reload') return;
+                                if (typeof fn === 'function') return fn.call(this, ev);
+                            };
+                            if (protoDesc && typeof protoDesc.set === 'function') {
+                                protoDesc.set.call(ws, _onmessage);
+                            }
+                        }
+                    });
+                    var origAdd = ws.addEventListener.bind(ws);
+                    ws.addEventListener = function (type, listener, opts) {
+                        if (type === 'message' && typeof listener === 'function') {
+                            return origAdd(type, function (ev) {
+                                if (ev && ev.data === 'reload') return;
+                                return listener.call(this, ev);
+                            }, opts);
+                        }
+                        return origAdd(type, listener, opts);
+                    };
+                    return ws;
+                };
+                window.WebSocket.prototype = NativeWS.prototype;
+                window.WebSocket.CONNECTING = NativeWS.CONNECTING;
+                window.WebSocket.OPEN = NativeWS.OPEN;
+                window.WebSocket.CLOSING = NativeWS.CLOSING;
+                window.WebSocket.CLOSED = NativeWS.CLOSED;
+            } catch (_) {}
+        })();
     </script>
     <script src="https://cdn.tailwindcss.com?plugins=typography"></script>
     <script>
@@ -343,6 +386,22 @@
             transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), transform-origin 0.08s ease-out;
             will-change: transform, transform-origin;
         }
+
+        /* Palco 3D Flip para Flashcards (Camada 7) */
+        .flashcard-scene {
+            perspective: 1200px;
+        }
+        .flashcard-inner {
+            transform-style: preserve-3d;
+            transition: transform 0.55s cubic-bezier(0.22, 1, 0.36, 1);
+        }
+        .flashcard-face {
+            backface-visibility: hidden;
+            -webkit-backface-visibility: hidden;
+        }
+        .flashcard-back {
+            transform: rotateY(180deg);
+        }
     </style>
 </head>
 
@@ -470,6 +529,20 @@
                     <span id="theme-toggle-label" class="hidden sm:inline">Escuro</span>
                 </button>
                 <div id="admin-status-indicator" class="flex items-center"></div>
+                <div id="studio-admin-topbar-controls" class="hidden items-center gap-1.5">
+                    <button id="btn-studio-topbar-revisao" type="button" onclick="window.StudyOS?.abrirModalStudioRevisao()"
+                        title="Abrir Painel de Aprovação Simplificado (Diff Antigo vs. Novo)"
+                        class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-indigo-950/70 hover:bg-indigo-900/80 border border-indigo-500/40 text-[11px] font-mono text-indigo-200 transition-all cursor-pointer shadow-xs">
+                        <span>⚡</span>
+                        <span id="studio-topbar-counter-badge">Fila: <strong class="text-white">0</strong> | Para Revisar: <strong class="text-white">0</strong> | Cota: <span class="text-emerald-300 font-semibold">OK</span></span>
+                    </button>
+                    <button id="btn-studio-topbar-lote" type="button" onclick="window.StudyOS?.abrirModalStudioLote()"
+                        title="Gerar ou Regerar Artefatos em Lote por Matéria ou Tipo"
+                        class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-purple-600/25 hover:bg-purple-600 border border-purple-500/40 text-[11px] font-mono font-semibold text-purple-200 hover:text-white transition-all cursor-pointer shadow-xs">
+                        <span>📦</span>
+                        <span class="hidden md:inline">Regerar Artefatos em Lote</span>
+                    </button>
+                </div>
                 <button type="button" onclick="abrirModalContato()" title="Falar com o Responsável pelo Site (Networking, Bugs ou Solicitações)"
                     class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-emerald-600/20 hover:bg-emerald-600 border border-emerald-500/30 hover:border-emerald-500 text-[11px] font-medium text-emerald-200 hover:text-white transition-all shadow-sm cursor-pointer">
                     <span>🌐</span>
@@ -641,11 +714,18 @@
                                 </h1>
                             </div>
                         </div>
-                        <button id="btn-edit-disc-meta"
-                            class="mt-2 inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-notion-sidebar hover:bg-indigo-600/20 text-notion-text hover:text-indigo-200 border border-notion-border hover:border-indigo-500/50 text-xs font-semibold shadow-sm transition-all cursor-pointer">
-                            <span>✏️</span>
-                            <span>Editar Matéria</span>
-                        </button>
+                        <div class="mt-2 flex items-center gap-2 flex-wrap">
+                            <button id="btn-studio-batch-disc"
+                                class="hidden items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-purple-600/25 hover:bg-purple-600 text-purple-200 hover:text-white border border-purple-500/40 text-xs font-mono font-semibold shadow-sm transition-all cursor-pointer">
+                                <span>📦</span>
+                                <span>Regerar/Gerar Artefatos em Lote</span>
+                            </button>
+                            <button id="btn-edit-disc-meta"
+                                class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-notion-sidebar hover:bg-indigo-600/20 text-notion-text hover:text-indigo-200 border border-notion-border hover:border-indigo-500/50 text-xs font-semibold shadow-sm transition-all cursor-pointer">
+                                <span>✏️</span>
+                                <span>Editar Matéria</span>
+                            </button>
+                        </div>
                     </div>
 
                     <!-- Propriedades estilo Notion -->
@@ -738,8 +818,7 @@
                                         Contínuo da Aula (H1 Toggle)</h2>
                                     <span id="media-filter-status-badge"
                                         class="text-[11px] text-emerald-300 font-mono bg-emerald-500/10 border border-emerald-500/30 px-2 py-0.5 rounded">
-                                        ⚡ Exibindo Todas as 6 Mídias (Clique abaixo para combinar ex: 2. Imagens +
-                                        outra)
+                                        ⚡ Exibindo Todas as Camadas (1 a 11) — Clique nos filtros para combinar
                                     </span>
                                 </div>
                                 <div class="flex items-center gap-1.5 flex-wrap self-start lg:self-auto">
@@ -768,7 +847,8 @@
                                     class="flex items-center gap-2 shrink-0 pt-2 xl:pt-0 border-t xl:border-t-0 border-notion-border/60">
                                     <select id="select-media-preset" onchange="aplicarPresetMidiaAula(this.value)"
                                         class="px-2.5 py-1 rounded-lg bg-notion-bg border border-notion-border text-[11px] font-mono text-notion-text focus:outline-none focus:border-indigo-500 cursor-pointer">
-                                        <option value="todas">🎛️ Combinar Rápido: Todas (1 a 6)</option>
+                                        <option value="todas">🎛️ Combinar Rápido: Todas (1 a 11)</option>
+                                        <option value="interativos">🧠🃏🎯📄 Somente Interativos (6 a 9)</option>
                                         <option value="img+pdf">🖼️ 2. Imagens + 📄 3. PDF Sem OCR</option>
                                         <option value="md+img">📝 1. MD + 🖼️ 2. Imagens</option>
                                         <option value="img+audio">🖼️ 2. Imagens + 🎧 5. M4A</option>
@@ -779,7 +859,7 @@
                                     </select>
                                     <button onclick="resetarFiltroMidiasAula()" id="btn-reset-media-filter"
                                         class="hidden px-2.5 py-1 rounded-lg bg-rose-500/15 hover:bg-rose-500/25 text-rose-300 border border-rose-500/30 text-[11px] font-mono transition-colors">
-                                        ✕ Mostrar Todas (6)
+                                        ✕ Mostrar Todas (1-11)
                                     </button>
                                 </div>
                             </div>
